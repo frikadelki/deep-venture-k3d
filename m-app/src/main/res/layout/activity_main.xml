@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="org.frikadelki.deepv.MainActivity">
+    tools:context="org.frikadelki.deepv.main.MainActivity">
 
     <FrameLayout
         android:id="@+id/screen_main_content_frame"

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Deep Venture K3D
+  ~ Copyright 2018 -*- frikadelki-corps -*-
+  ~ Created by frikadelki on 2018/2/5
+  -->
+
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.frikadelki.deepv.pipeline">
+</manifest>

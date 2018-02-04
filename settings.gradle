@@ -1,1 +1,2 @@
-include ':app'
+include ':m-gles20-pipeline'
+include ':m-app'
