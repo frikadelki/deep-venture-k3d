@@ -77,7 +77,7 @@ class Program internal constructor(private val program: Int, source: ProgramSour
             glClearErrors()
             throw ProgramException("Failed to locate uniform '$name'.")
         }
-        return UniformHandle(handle)
+        return UniformHandle(handle, ::checkDisposed)
     }
 
     private fun checkDisposed() {

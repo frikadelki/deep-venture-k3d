@@ -18,10 +18,12 @@ class SimplestProgram(private val pipeline: Pipeline) {
             """
                 precision mediump float;
 
+                uniform mat4 viewProjectionMatrix;
+
                 attribute vec4 vPosition;
 
                 void main() {
-                    gl_Position = vPosition;
+                    gl_Position = viewProjectionMatrix * vPosition;
                 }
 
             """.trimIndent(),
@@ -38,14 +40,18 @@ class SimplestProgram(private val pipeline: Pipeline) {
 
     private val program: Program = pipeline.loadProgram(programSource)
 
+    private val viewProjectionMatrix: UniformHandle = program.uniform("viewProjectionMatrix")
+
     private val vertexPosition: VertexAttributeHandle = program.vertexAttribute("vPosition")
 
     private val vertexColor: UniformHandle = program.uniform("vColor")
 
-    fun draw(drawCall: (vertexPosition: VertexAttributeHandle, vertexColor: UniformHandle) -> Unit) {
+    fun draw(drawCall: (viewProjectionMatrixHandle: UniformHandle,
+                        vertexPositionHandle: VertexAttributeHandle,
+                        vertexColorHandle: UniformHandle) -> Unit) {
         program.use()
         vertexPosition.enable()
-        drawCall(vertexPosition, vertexColor)
+        drawCall(viewProjectionMatrix, vertexPosition, vertexColor)
         if (glErred()) {
             TODO()
         }

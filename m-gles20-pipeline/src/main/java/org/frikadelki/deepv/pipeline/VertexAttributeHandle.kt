@@ -9,7 +9,7 @@ package org.frikadelki.deepv.pipeline
 import android.opengl.GLES20
 import java.nio.Buffer
 
-class VertexAttributeHandle(private val handle: Int, private val checkDisposed: () -> Unit) {
+class VertexAttributeHandle internal constructor(private val handle: Int, private val checkDisposed: () -> Unit) {
     enum class ComponentsCount(val count: Int) {
         ONE(1),
         TWO(2),
