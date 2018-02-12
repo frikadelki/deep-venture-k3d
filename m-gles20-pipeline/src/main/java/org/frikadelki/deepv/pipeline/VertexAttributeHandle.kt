@@ -7,15 +7,10 @@
 package org.frikadelki.deepv.pipeline
 
 import android.opengl.GLES20
+import org.frikadelki.deepv.pipeline.math.Vector4Components
 import java.nio.Buffer
 
 class VertexAttributeHandle internal constructor(private val handle: Int, private val checkDisposed: () -> Unit) {
-    enum class ComponentsCount(val count: Int) {
-        ONE(1),
-        TWO(2),
-        THREE(3),
-        FOUR(4);
-    }
 
     enum class ComponentType(val type: Int, val size: Int) {
         BYTE(GLES20.GL_BYTE, 1),
@@ -42,7 +37,7 @@ class VertexAttributeHandle internal constructor(private val handle: Int, privat
         }
     }
 
-    fun setData(data: Buffer, components: ComponentsCount, type: ComponentType,
+    fun setData(data: Buffer, components: Vector4Components, type: ComponentType,
                 vertexStride: Int = 0, normalizeInts: Boolean = false) {
         checkDisposed()
         if (vertexStride < 0) {

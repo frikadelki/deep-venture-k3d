@@ -11,29 +11,32 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 
-
 const val BYTES_PER_FLOAT: Int = 4
 
-fun directFloatBufferFromArray(input: FloatArray): FloatBuffer {
-    val byteBuffer = ByteBuffer.allocateDirect(input.size * BYTES_PER_FLOAT)
+fun directFloatBuffer(floatsCapacity: Int): FloatBuffer {
+    val byteBuffer = ByteBuffer.allocateDirect(floatsCapacity * BYTES_PER_FLOAT)
     byteBuffer.order(ByteOrder.nativeOrder())
+    return byteBuffer.asFloatBuffer()
+}
 
-    val output = byteBuffer.asFloatBuffer()
+fun directFloatBufferFromArray(input: FloatArray): FloatBuffer {
+    val output = directFloatBuffer(input.size)
     output.put(input)
     output.position(0)
-
     return output
 }
 
 const val BYTES_PER_SHORT: Int = 2
 
-fun directShortBufferFormArray(input: ShortArray): ShortBuffer {
-    val byteBuffer = ByteBuffer.allocateDirect(input.size * BYTES_PER_SHORT)
+fun directShortBuffer(shortsCapacity: Int): ShortBuffer {
+    val byteBuffer = ByteBuffer.allocateDirect(shortsCapacity * BYTES_PER_SHORT)
     byteBuffer.order(ByteOrder.nativeOrder())
+    return byteBuffer.asShortBuffer()
+}
 
-    val output = byteBuffer.asShortBuffer()
+fun directShortBufferFromArray(input: ShortArray): ShortBuffer {
+    val output = directShortBuffer(input.size)
     output.put(input)
     output.position(0)
-
     return output
 }

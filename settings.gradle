@@ -1,2 +1,3 @@
+include ':m-kash-toolset'
 include ':m-gles20-pipeline'
 include ':m-app'

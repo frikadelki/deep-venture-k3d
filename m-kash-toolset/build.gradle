@@ -1,0 +1,15 @@
+/*
+ * Deep Venture K3D
+ * Copyright 2018 -*- frikadelki-corps -*-
+ * Created by frikadelki on 2018/2/12
+ */
+
+apply plugin: 'kotlin'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+
+    testImplementation 'junit:junit:4.12'
+}

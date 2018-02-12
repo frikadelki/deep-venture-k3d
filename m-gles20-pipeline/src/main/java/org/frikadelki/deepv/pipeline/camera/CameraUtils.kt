@@ -11,13 +11,12 @@ import org.frikadelki.deepv.pipeline.math.Vector4
 import android.opengl.Matrix as MatrixUtils
 
 fun Matrix4.setFrustum(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float): Matrix4 {
-    rawAccess { data, offset ->
-        MatrixUtils.frustumM(data, offset, left, right, bottom, top, near, far)
-    }
+    MatrixUtils.frustumM(rawData, rawOffset, left, right, bottom, top, near, far)
     return this
 }
 
-fun Matrix4.setPerspective(fovYRad: Float, aspectRatioWH: Float, zNear: Float, zFar: Float): Matrix4 {
+fun Matrix4.setPerspective(fovYDegrees: Float, aspectRatioWH: Float, zNear: Float, zFar: Float): Matrix4 {
+    val fovYRad = Math.toRadians(fovYDegrees.toDouble())
     val top: Float = (Math.tan(fovYRad/2.0) * zNear).toFloat()
     val bottom = -1.0f * top
     val left = aspectRatioWH * bottom
@@ -26,11 +25,9 @@ fun Matrix4.setPerspective(fovYRad: Float, aspectRatioWH: Float, zNear: Float, z
 }
 
 fun Matrix4.setLookAt(eye: Vector4, center: Vector4, up: Vector4): Matrix4 {
-    rawAccess { data, offset ->
-        MatrixUtils.setLookAtM(data, offset,
-                eye.x, eye.y, eye.z,
-                center.x, center.y, center.z,
-                up.x, up.y, up.z)
-    }
+    MatrixUtils.setLookAtM(rawData, rawOffset,
+            eye.x, eye.y, eye.z,
+            center.x, center.y, center.z,
+            up.x, up.y, up.z)
     return this
 }

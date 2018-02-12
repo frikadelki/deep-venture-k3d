@@ -16,6 +16,11 @@ import javax.microedition.khronos.opengles.GL10
 
 class MainLoop : GLSurfaceView.Renderer {
     private var pipeline: Pipeline? = null
+
+    private val frameAnimationStepMillisThreshold: Long = 12
+    private val frameAnimationDeltaMillisClampTop: Long = 100
+    private var lastFrameMillis: Long = Long.MAX_VALUE
+
     private var drawCall: SimplestDrawCall? = null
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -31,8 +36,28 @@ class MainLoop : GLSurfaceView.Renderer {
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        val currentFrameMillis = System.currentTimeMillis()
+        val animateMillis: Long =
+                if (lastFrameMillis < currentFrameMillis) {
+                    val delta = currentFrameMillis - lastFrameMillis
+                    if (delta > frameAnimationStepMillisThreshold) {
+                        Math.min(delta, frameAnimationDeltaMillisClampTop)
+                        delta
+                    } else {
+                        -1
+                    }
+                } else {
+                    -1
+                }
+        lastFrameMillis = currentFrameMillis
+
+        if (animateMillis > 0) {
+            drawCall?.onUpdateAnimations(animateMillis)
+
+        }
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
-        drawCall?.draw()
+        drawCall?.onDraw()
     }
 }
 
