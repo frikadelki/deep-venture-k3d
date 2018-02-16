@@ -7,6 +7,9 @@
 package org.frikadelki.deepv.pipeline
 
 import android.opengl.GLES20
+import org.frikadelki.deepv.pipeline.program.Program
+import org.frikadelki.deepv.pipeline.program.ProgramException
+import org.frikadelki.deepv.pipeline.program.ProgramSource
 
 
 class Pipeline {
@@ -17,6 +20,22 @@ class Pipeline {
             throw ProgramException("Failed to create program.")
         }
         return Program(programHandle, source)
+    }
+
+    fun setClearColor(r: Float, g: Float, b: Float, a: Float) {
+        GLES20.glClearColor(r, g, b, a)
+    }
+
+    fun setCullingEnabled(enabled: Boolean) {
+        if (enabled) {
+            GLES20.glEnable(GLES20.GL_CULL_FACE)
+        } else {
+            GLES20.glDisable(GLES20.GL_CULL_FACE)
+        }
+    }
+
+    fun clearColorBuffer() {
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
     }
 }
 

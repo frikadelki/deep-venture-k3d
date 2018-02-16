@@ -4,9 +4,10 @@
  * Created by frikadelki on 2018/2/5
  */
 
-package org.frikadelki.deepv.pipeline
+package org.frikadelki.deepv.pipeline.program
 
 import android.opengl.GLES20
+import org.frikadelki.deepv.pipeline.glErred
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
 

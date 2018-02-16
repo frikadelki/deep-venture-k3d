@@ -4,9 +4,12 @@
  * Created by frikadelki on 2018/2/5
  */
 
-package org.frikadelki.deepv.pipeline
+package org.frikadelki.deepv.pipeline.program
 
 import android.opengl.GLES20
+import org.frikadelki.deepv.pipeline.glClearErrors
+import org.frikadelki.deepv.pipeline.glErred
+import java.nio.ShortBuffer
 
 
 class ProgramException : Throwable {
@@ -120,5 +123,17 @@ class Program internal constructor(private val program: Int, source: ProgramSour
         }
 
         return shader
+    }
+
+    fun drawTriangles(indexBuffer: ShortBuffer) {
+        indexBuffer.rewind()
+        GLES20.glDrawElements(
+                GLES20.GL_TRIANGLES,
+                indexBuffer.capacity(),
+                GLES20.GL_UNSIGNED_SHORT,
+                indexBuffer)
+        if (glErred()) {
+            throw ProgramException("Draw triangles failed.")
+        }
     }
 }

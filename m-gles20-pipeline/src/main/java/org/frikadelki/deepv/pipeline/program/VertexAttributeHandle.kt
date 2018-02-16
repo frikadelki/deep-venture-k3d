@@ -4,9 +4,10 @@
  * Created by frikadelki on 2018/2/5
  */
 
-package org.frikadelki.deepv.pipeline
+package org.frikadelki.deepv.pipeline.program
 
 import android.opengl.GLES20
+import org.frikadelki.deepv.pipeline.glErred
 import org.frikadelki.deepv.pipeline.math.Vector4Components
 import java.nio.Buffer
 
@@ -43,6 +44,7 @@ class VertexAttributeHandle internal constructor(private val handle: Int, privat
         if (vertexStride < 0) {
             throw IllegalArgumentException("vertexStride")
         }
+        data.rewind()
         GLES20.glVertexAttribPointer(
                 handle,
                 components.count,

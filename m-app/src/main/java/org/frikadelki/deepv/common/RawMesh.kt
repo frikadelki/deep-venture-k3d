@@ -1,22 +1,24 @@
 /*
  * Deep Venture K3D
  * Copyright 2018 -*- frikadelki-corps -*-
- * Created by frikadelki on 2018/2/11
+ * Created by frikadelki on 2018/2/15
  */
 
-package org.frikadelki.deepv.scene
+package org.frikadelki.deepv.common
 
 import org.frikadelki.deepv.pipeline.directShortBuffer
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4Array
-import org.frikadelki.deepv.pipeline.math.Vector4Components
 import org.frikadelki.deepv.pipeline.math.World
 import org.frikadelki.deepv.pipeline.math.v4AxisX
 import java.nio.ShortBuffer
 
-fun primitiveCube(): SimplestPrimitive {
+
+data class RawMesh(val positionsBuffer: Vector4Array,
+                   val indexBuffer: ShortBuffer)
+
+fun rawCubeMesh(): RawMesh {
     val sideSize: Float = World.C1
-    val exportComponents = Vector4Components.THREE
 
     val sidesCount = 4
     val pointsPerSide = 4
@@ -25,8 +27,8 @@ fun primitiveCube(): SimplestPrimitive {
     val tmpMatrix = Matrix4()
     val tmpSideIndicesArray = ShortArray(sideIndicesTemplate.size)
 
-    val verticesPositionsBuffer = Vector4Array(sidesCount * pointsPerSide)
-    val geometryIndexBuffer = directShortBuffer(sidesCount * sideIndicesTemplate.size)
+    val positionsBuffer = Vector4Array(sidesCount * pointsPerSide)
+    val indexBuffer = directShortBuffer(sidesCount * sideIndicesTemplate.size)
     var planeIndex = 0
 
     fun generateSide(vertexPositionArray: Vector4Array, indexBufferOutput: ShortBuffer, indexOffset: Int) {
@@ -46,8 +48,8 @@ fun primitiveCube(): SimplestPrimitive {
         }
 
         val indexOffset = planeIndex * pointsPerSide
-        val planeVertexBufferSlice = verticesPositionsBuffer.slice(indexOffset, pointsPerSide)
-        generateSide(planeVertexBufferSlice, geometryIndexBuffer, indexOffset)
+        val planeVertexBufferSlice = positionsBuffer.slice(indexOffset, pointsPerSide)
+        generateSide(planeVertexBufferSlice, indexBuffer, indexOffset)
 
         val transformMatrix = transformer.invoke(tmpMatrix.setE())
         planeVertexBufferSlice.multiplyAll(transformMatrix)
@@ -80,10 +82,8 @@ fun primitiveCube(): SimplestPrimitive {
 
     // center on origin
     val dToOrigin = -sideSize/2.0f
-    verticesPositionsBuffer.multiplyAll(tmpMatrix.setE().translate(dToOrigin, dToOrigin, dToOrigin))
-    verticesPositionsBuffer.perspectiveDivideAll()
+    positionsBuffer.multiplyAll(tmpMatrix.setE().translate(dToOrigin, dToOrigin, dToOrigin))
+    positionsBuffer.perspectiveDivideAll()
 
-    // export
-    val vertexBuffer = verticesPositionsBuffer.toDirectFloatBuffer(exportComponents)
-    return SimplestPrimitive(vertexBuffer, exportComponents, geometryIndexBuffer)
+    return RawMesh(positionsBuffer, indexBuffer)
 }

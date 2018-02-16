@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.FrameLayout
 import org.frikadelki.deepv.R
+import org.frikadelki.deepv.demos.pd00.Pd00SceneLoop
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mainLoop: MainLoop
@@ -24,7 +25,7 @@ class MainActivity : AppCompatActivity() {
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
         contentFrame.addView(surfaceView, contentLayoutParams)
 
-        mainLoop = MainLoop()
+        mainLoop = MainLoop(Pd00SceneLoop())
         surfaceView.setRenderer(mainLoop)
     }
 }
