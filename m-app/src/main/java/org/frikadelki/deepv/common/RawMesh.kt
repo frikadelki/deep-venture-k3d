@@ -7,20 +7,18 @@
 package org.frikadelki.deepv.common
 
 import org.frikadelki.deepv.pipeline.directShortBuffer
-import org.frikadelki.deepv.pipeline.math.Matrix4
-import org.frikadelki.deepv.pipeline.math.Vector4Array
-import org.frikadelki.deepv.pipeline.math.World
-import org.frikadelki.deepv.pipeline.math.v4AxisX
+import org.frikadelki.deepv.pipeline.math.*
 import java.nio.ShortBuffer
 
 
 data class RawMesh(val positionsBuffer: Vector4Array,
+                   val normalsBuffer: Vector4Array,
                    val indexBuffer: ShortBuffer)
 
 fun rawCubeMesh(): RawMesh {
     val sideSize: Float = World.C1
 
-    val sidesCount = 4
+    val sidesCount = 6
     val pointsPerSide = 4
     val sideIndicesTemplate = shortArrayOf(0, 1, 2, 0, 2, 3)
 
@@ -28,62 +26,86 @@ fun rawCubeMesh(): RawMesh {
     val tmpSideIndicesArray = ShortArray(sideIndicesTemplate.size)
 
     val positionsBuffer = Vector4Array(sidesCount * pointsPerSide)
+    val normalsBuffer = Vector4Array(sidesCount * pointsPerSide)
     val indexBuffer = directShortBuffer(sidesCount * sideIndicesTemplate.size)
     var planeIndex = 0
 
-    fun generateSide(vertexPositionArray: Vector4Array, indexBufferOutput: ShortBuffer, indexOffset: Int) {
-        vertexPositionArray.putPoint(World.C0, World.C0, World.C0)
-        vertexPositionArray.putPoint(sideSize, World.C0, World.C0)
-        vertexPositionArray.putPoint(sideSize, sideSize, World.C0)
-        vertexPositionArray.putPoint(World.C0, sideSize, World.C0)
+    fun generatePlaneMesh(positionsArray: Vector4Array,
+                          normalsArray: Vector4Array,
+                          indexBufferOutput: ShortBuffer,
+                          indexOffset: Int) {
+        positionsArray.putPoint(World.C0, World.C0, World.C0)
+        positionsArray.putPoint(sideSize, World.C0, World.C0)
+        positionsArray.putPoint(sideSize, sideSize, World.C0)
+        positionsArray.putPoint(World.C0, sideSize, World.C0)
+        for(i in 0 until pointsPerSide) {
+            normalsArray.putVector(World.C0, World.C0, World.C1, World.C0)
+        }
         for ((index, value) in sideIndicesTemplate.withIndex()) {
             tmpSideIndicesArray[index] = (indexOffset + value).toShort()
         }
         indexBufferOutput.put(tmpSideIndicesArray)
     }
 
-    fun addPlane(transformer: (matrix: Matrix4) -> Matrix4) {
+    fun addSidePlane(transformer: (matrix: Matrix4) -> Matrix4) {
         if (planeIndex < 0 || planeIndex >= sidesCount) {
             throw IllegalStateException("Plain index out of bounds.")
         }
 
         val indexOffset = planeIndex * pointsPerSide
-        val planeVertexBufferSlice = positionsBuffer.slice(indexOffset, pointsPerSide)
-        generateSide(planeVertexBufferSlice, indexBuffer, indexOffset)
+        val planePositionsBufferSlice = positionsBuffer.slice(indexOffset, pointsPerSide)
+        val planeNormalsBufferSlice = normalsBuffer.slice(indexOffset, pointsPerSide)
+        generatePlaneMesh(planePositionsBufferSlice, planeNormalsBufferSlice, indexBuffer, indexOffset)
 
         val transformMatrix = transformer.invoke(tmpMatrix.setE())
-        planeVertexBufferSlice.multiplyAll(transformMatrix)
-        planeVertexBufferSlice.perspectiveDivideAll()
+        planePositionsBufferSlice.multiplyAll(transformMatrix)
+        planePositionsBufferSlice.perspectiveDivideAll()
+        planeNormalsBufferSlice.multiplyAll(transformMatrix)
+        planeNormalsBufferSlice.normalizeAll()
 
         planeIndex++
     }
 
     // top
-    addPlane { matrix -> matrix
+    addSidePlane { matrix -> matrix
             .translate(dz = sideSize)
     }
 
     // bottom
-    addPlane { matrix -> matrix
+    addSidePlane { matrix -> matrix
             .translate(dy = sideSize)
             .rotate(v4AxisX(), World.ARC_180)
     }
 
     // left
-    addPlane { matrix -> matrix
+    addSidePlane { matrix -> matrix
             .rotate(v4AxisX(), World.ARC_090)
     }
 
     // right
-    addPlane { matrix -> matrix
+    addSidePlane { matrix -> matrix
             .translate(dy = sideSize, dz = sideSize)
             .rotate(v4AxisX(), World.ARC_270)
     }
 
+    // front
+    addSidePlane { matrix -> matrix
+            .translate(dx = sideSize, dz = sideSize)
+            .rotate(v4AxisY(), World.ARC_090)
+    }
+
+    // back
+    addSidePlane { matrix -> matrix
+            .rotate(v4AxisY(), World.ARC_270)
+    }
+
     // center on origin
     val dToOrigin = -sideSize/2.0f
-    positionsBuffer.multiplyAll(tmpMatrix.setE().translate(dToOrigin, dToOrigin, dToOrigin))
+    tmpMatrix.setE().translate(dToOrigin, dToOrigin, dToOrigin)
+    positionsBuffer.multiplyAll(tmpMatrix)
     positionsBuffer.perspectiveDivideAll()
+    normalsBuffer.multiplyAll(tmpMatrix)
+    normalsBuffer.normalizeAll()
 
-    return RawMesh(positionsBuffer, indexBuffer)
+    return RawMesh(positionsBuffer, normalsBuffer, indexBuffer)
 }

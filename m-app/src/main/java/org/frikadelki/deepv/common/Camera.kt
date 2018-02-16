@@ -20,6 +20,8 @@ class Camera {
     private val viewM: Matrix4 = Matrix4().setE()
     private val projectionM: Matrix4 = Matrix4().setE()
 
+    val eyePosition: Vector4 = Vector4()
+
     private val computedViewProjectionM: Matrix4 = Matrix4()
     private val viewProjectionMProperty = dirtyProperty {
         computedViewProjectionM
@@ -32,6 +34,7 @@ class Camera {
     fun setLookAt(eyePosition: Vector4,
                   lookAtCenter: Vector4,
                   cameraUp: Vector4) {
+        this.eyePosition.set(eyePosition)
         viewM.setLookAt(eyePosition, lookAtCenter, cameraUp)
         viewProjectionMProperty.markDirty()
     }

@@ -25,6 +25,10 @@ enum class Vector4Components(val count: Int) {
     THREE(3),
     FOUR(4),
     ;
+
+    fun greaterThan(components: Vector4Components): Boolean {
+        return count > components.count
+    }
 }
 
 class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
@@ -37,6 +41,10 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
 
     constructor(x: Float = C0, y: Float = C0, z: Float = C0, w: Float = C0)
             : this(floatArrayOf(x, y, z, w), 0)
+
+    fun length(): Float {
+        return Math.sqrt((x*x + y*y + z*z + w*w).toDouble()).toFloat()
+    }
 
     fun set(x: Float = this.x, y: Float = this.y, z: Float = this.z, w: Float = this.w) : Vector4 {
         data[offset + V4_X] = x
@@ -66,9 +74,14 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
 
     fun pointWDivide() {
         if (isEpsilonZero(w)) {
-            throw IllegalStateException("Not a point.")
+            return
         }
         set(x/w, y/w, z/w, V4_POINT_W)
+    }
+
+    fun normalize() {
+        val length = length()
+        set(x/length, y/length, z/length, w/length)
     }
 
     var x: Float
@@ -151,7 +164,7 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
 
 class Vector4Array internal constructor(private val data: FloatArray,
                                         private val dataOffset: Int,
-                                        private val vectorsCount: Int,
+                                        val vectorsCount: Int,
                                         private val tmpVector: Vector4 = Vector4()) {
     init {
         if (dataOffset < 0) {
@@ -194,9 +207,15 @@ class Vector4Array internal constructor(private val data: FloatArray,
         }
     }
 
-    fun put(vector: Vector4) {
+    fun putVector(vector: Vector4) {
         checkRemaining()
         access.set(vector)
+        advancePosition()
+    }
+
+    fun putVector(x: Float, y: Float, z: Float, w: Float) {
+        checkRemaining()
+        access.set(x, y, z, w)
         advancePosition()
     }
 
@@ -218,6 +237,14 @@ class Vector4Array internal constructor(private val data: FloatArray,
         rewind()
         for(i in 0 until vectorsCount) {
             access.pointWDivide()
+            advancePosition()
+        }
+    }
+
+    fun normalizeAll() {
+        rewind()
+        for(i in 0 until vectorsCount) {
+            access.normalize()
             advancePosition()
         }
     }
@@ -250,4 +277,10 @@ class Vector4Array internal constructor(private val data: FloatArray,
         output.position(0)
         return output
     }
+
+    internal val rawData: FloatArray
+        get() = data
+
+    internal val rawOffset: Int
+        get() = dataOffset
 }

@@ -10,10 +10,15 @@ import android.opengl.GLES20
 import org.frikadelki.deepv.pipeline.glErred
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
+import org.frikadelki.deepv.pipeline.math.Vector4Array
 
 class UniformHandle internal constructor(private val handle: Int, private val checkDisposed: () -> Unit) {
     fun setVector(vector: Vector4) {
         setVector(vector.rawData, UniformVecSize.FOUR, 1, vector.rawOffset)
+    }
+
+    fun setVectorArray(array: Vector4Array) {
+        setVector(array.rawData, UniformVecSize.FOUR, array.vectorsCount, array.rawOffset)
     }
 
     private fun setVector(data: FloatArray, size: UniformVecSize, count: Int = 1, offset: Int = 0) {

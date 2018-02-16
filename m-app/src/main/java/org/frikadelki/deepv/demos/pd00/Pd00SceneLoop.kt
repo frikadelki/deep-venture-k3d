@@ -7,11 +7,13 @@
 package org.frikadelki.deepv.demos.pd00
 
 import android.opengl.GLES20
+import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
 import org.frikadelki.deepv.main.SceneLoop
 import org.frikadelki.deepv.pipeline.Pipeline
 import org.frikadelki.deepv.pipeline.math.v4AxisZ
+import org.frikadelki.deepv.pipeline.math.v4Color
 import org.frikadelki.deepv.pipeline.math.v4Point
 import org.frikadelki.deepv.pipeline.math.v4Vector
 
@@ -60,19 +62,21 @@ private class Pd00Scene(val pipeline: Pipeline) {
         val meshPainterLump = Pd0MeshPainterLump(
                 mainProgram,
                 cubeMesh,
-                v4Vector(0.63671875f, 0.76953125f, 0.22265625f, 1.0f))
+                v4Color(0.63671875f, 0.76953125f, 0.22265625f, 1.0f),
+                v4Color(0.9f, 0.7f, 0.1f, 3.5f))
         scubePawn.addLump(meshPainterLump)
     }
 
     private val bubePawn = Pawn()
     init {
-        bubePawn.transform.selfRotate(v4AxisZ(), 45.0f)
+        bubePawn.transform.selfRotate(v4AxisZ(), 15.0f)
         bubePawn.transform.worldTranslate(v4Vector(x = -0.5f, z = 0.2f))
 
         val meshPainterLump = Pd0MeshPainterLump(
                 mainProgram,
                 cubeMesh,
-                v4Vector(0.63671875f, 0.1f, 0.22265625f, 1.0f))
+                v4Color(0.63671875f, 0.1f, 0.22265625f, 1.0f),
+                v4Color(1.0f, 0.1f, 0.1f, 4.5f))
         bubePawn.addLump(meshPainterLump)
     }
 
@@ -80,11 +84,24 @@ private class Pd00Scene(val pipeline: Pipeline) {
 
     private val scene = Scene()
 
+    val cameraEyePosition = v4Point(1.8f, 0.0f, 0.8f)
+    val cameraLookAtCenter = v4Point()
+    val cameraUp = v4AxisZ()
+
+    private val sceneAmbientColor = v4Color(0.3f, 0.3f, 0.3f)
+    private val sceneSun0 = Lights.Direct(
+            v4Vector(x = -1.0f, z = 1.0f),
+            v4Color(0.3f, 0.3f, 0.3f))
+    private val sceneBulb0 = Lights.Point(
+            v4Point(x = 2.0f, z = 2.0f),
+            v4Color(0.5f, 0.5f, 0.5f))
+
     init {
-        val eyePosition = v4Point(1.5f, 0.0f, 0.5f)
-        val lookAtCenter = v4Point()
-        val cameraUp = v4AxisZ()
-        scene.camera.setLookAt(eyePosition, lookAtCenter, cameraUp)
+        scene.camera.setLookAt(cameraEyePosition, cameraLookAtCenter, cameraUp)
+
+        scene.lights.ambient.set(sceneAmbientColor)
+        scene.lights.add(sceneSun0)
+        scene.lights.add(sceneBulb0)
 
         scene.addPawn(scubePawn)
         scene.addPawn(bubePawn)
@@ -100,7 +117,8 @@ private class Pd00Scene(val pipeline: Pipeline) {
     fun onDrawFrame() {
         pipeline.setClearColor(0.5f, 0.0f, 0.0f, 1.0f)
         pipeline.clearColorBuffer()
-        // pipeline.setCullingEnabled(true)
+        pipeline.setCullingEnabled(true)
+
         scene.onDraw()
     }
 

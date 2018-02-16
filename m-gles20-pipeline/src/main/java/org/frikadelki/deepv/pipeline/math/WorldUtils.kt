@@ -29,6 +29,12 @@ fun v4Vector(x: Float = World.C0,
              w: Float = World.C0,
              out: Vector4 = Vector4()) = out.set(x, y, z, w)
 
+fun v4Color(r: Float = World.C0,
+            g: Float = World.C0,
+            b: Float = World.C0,
+            a: Float = World.C1,
+            out: Vector4 = Vector4()) = out.set(r, g, b, a)
+
 fun v4AxisX(out: Vector4 = Vector4()) = v4Vector(x = World.C1, out = out)
 
 fun v4AxisY(out: Vector4 = Vector4()) = v4Vector(y = World.C1, out = out)
