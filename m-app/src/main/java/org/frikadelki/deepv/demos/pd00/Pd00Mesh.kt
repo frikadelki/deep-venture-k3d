@@ -39,8 +39,7 @@ class Pd0MeshPainterLump(private val program: Pd00Program,
 
     override fun onDraw(pawn: Pawn, scene: Scene, context: Scene.DrawContext) {
         program.enable()
-        program.setViewProjectionMatrix(scene.camera.viewProjectionMatrix)
-        program.setCameraEyePosition(scene.camera.eyePosition)
+        program.setCamera(scene.camera)
         program.setLights(scene.lights)
 
         program.setModelMatrix(pawn.transform.modelMatrix)

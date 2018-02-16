@@ -84,7 +84,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
 
     private val scene = Scene()
 
-    val cameraEyePosition = v4Point(1.8f, 0.0f, 0.8f)
+    val cameraEyePosition = v4Point(1.6f, 0.0f, 0.7f)
     val cameraLookAtCenter = v4Point()
     val cameraUp = v4AxisZ()
 
@@ -115,7 +115,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
     }
 
     fun onDrawFrame() {
-        pipeline.setClearColor(0.5f, 0.0f, 0.0f, 1.0f)
+        pipeline.setClearColor(0.1f, 0.4f, 0.4f, 1.0f)
         pipeline.clearColorBuffer()
         pipeline.setCullingEnabled(true)
 

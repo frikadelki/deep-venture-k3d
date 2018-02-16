@@ -6,17 +6,20 @@
 
 package org.frikadelki.deepv.demos.pd00
 
+import org.frikadelki.deepv.common.Camera
 import org.frikadelki.deepv.common.Lights
+import org.frikadelki.deepv.common.LightsSnippet
 import org.frikadelki.deepv.pipeline.Pipeline
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
-import org.frikadelki.deepv.pipeline.math.Vector4Array
 import org.frikadelki.deepv.pipeline.math.Vector4Components
 import org.frikadelki.deepv.pipeline.program.*
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 
 class Pd00Program(pipeline: Pipeline) {
+    private val lightsSnippet = LightsSnippet(2)
+
     private val programSource = ProgramSource(
             """
                 precision mediump float;
@@ -42,48 +45,7 @@ class Pd00Program(pipeline: Pipeline) {
             """
                 precision mediump float;
 
-                uniform vec4 lightsAmbient;
-
-                // w component determines type of light
-                // -1 - directed light, xyz determine source direction
-                //  0 - this light is off
-                // +1 - point light, xyz determine source position
-                uniform vec4 lightsSimpleSpec[$SIMPLE_LIGHTS_MAX];
-
-                uniform vec4 lightsSimpleColor[$SIMPLE_LIGHTS_MAX];
-
-                struct LightIntensity {
-                    vec4 ambient;
-                    vec4 diffuse;
-                    vec4 specular;
-                };
-
-                LightIntensity calculateLight(vec3 position, vec3 normal, vec3 eye, float shininess) {
-                    LightIntensity light = LightIntensity(lightsAmbient, vec4(0.0), vec4(0.0));
-                    for(int i = 0; i < $SIMPLE_LIGHTS_MAX; i++) {
-                        vec4 lightSpec = lightsSimpleSpec[i];
-                        vec3 lightDirection;
-                        if (lightSpec.w < 0.0) {
-                            lightDirection = normalize(lightSpec.xyz);
-                        } else if (lightSpec.w < 1.0) {
-                            lightDirection = -normal;
-                        } else {
-                            lightDirection = normalize(lightSpec.xyz - position);
-                        }
-                        float lambertian = dot(lightDirection, normal);
-                        if (lambertian <= 0.0) {
-                            continue;
-                        }
-                        vec3 viewDirection = eye - position;
-                        vec3 lightViewHalf = normalize(lightDirection + viewDirection);
-                        float specularAngle = dot(lightViewHalf, normal);
-
-                        vec4 lightColor = lightsSimpleColor[i];
-                        light.diffuse += max(0.0, lambertian) * lightColor;
-                        light.specular += pow(max(0.0, specularAngle), shininess) * lightColor;
-                    }
-                    return light;
-                }
+                ${lightsSnippet.fragmentSource}
 
                 uniform vec4 cameraEyePosition;
 
@@ -94,9 +56,8 @@ class Pd00Program(pipeline: Pipeline) {
                 varying vec3 varNormal;
 
                 void main() {
-                    LightIntensity light = calculateLight(varPosition, varNormal, cameraEyePosition.xyz, modelColorSpecular.w);
-                    gl_FragColor = (light.ambient + light.diffuse) * modelColorDiffuse
-                                + light.specular * modelColorSpecular;
+                    LightsIntensity light = lightsIntensity(varPosition, varNormal, cameraEyePosition.xyz, modelColorSpecular.w);
+                    gl_FragColor = (light.ambient + light.diffuse) * modelColorDiffuse + light.specular * modelColorSpecular;
                 }
 
             """.trimIndent())
@@ -106,10 +67,7 @@ class Pd00Program(pipeline: Pipeline) {
     private val viewProjectionMatrix: UniformHandle = program.uniform("viewProjectionMatrix")
     private val cameraEyePosition: UniformHandle = program.uniform("cameraEyePosition")
 
-    private val lightsExporterTmp = Pd00LightsExporter()
-    private val lightsAmbientColor: UniformHandle = program.uniform("lightsAmbient")
-    private val lightsSimpleSpec: UniformHandle = program.uniform("lightsSimpleSpec")
-    private val lightsSimpleColor: UniformHandle = program.uniform("lightsSimpleColor")
+    private val lightsBinding = lightsSnippet.makeBinding(program)
 
     private val modelMatrix: UniformHandle = program.uniform("modelMatrix")
     private val modelColorDiffuse: UniformHandle = program.uniform("modelColorDiffuse")
@@ -122,23 +80,13 @@ class Pd00Program(pipeline: Pipeline) {
         program.use()
     }
 
-    fun setViewProjectionMatrix(matrix: Matrix4) {
-        viewProjectionMatrix.setMatrix(matrix)
-    }
-
-    fun setCameraEyePosition(position: Vector4) {
-        cameraEyePosition.setVector(position)
+    fun setCamera(camera: Camera) {
+        cameraEyePosition.setVector(camera.eyePosition)
+        viewProjectionMatrix.setMatrix(camera.viewProjectionMatrix)
     }
 
     fun setLights(lights: Lights) {
-        lightsExporterTmp.rebuild { builder ->
-            lights.directLights.forEach { builder.addDirect(it.direction, it.color) }
-            lights.pointLights.forEach { builder.addPoint(it.origin, it.color) }
-        }
-
-        lightsAmbientColor.setVector(lights.ambient)
-        lightsSimpleSpec.setVectorArray(lightsExporterTmp.simpleLightsSpecs)
-        lightsSimpleColor.setVectorArray(lightsExporterTmp.simpleLightsColors)
+        lightsBinding.setLights(lights)
     }
 
     fun setModelMatrix(matrix: Matrix4) {
@@ -177,44 +125,5 @@ class Pd00Program(pipeline: Pipeline) {
 
     fun dispose() {
         program.dispose()
-    }
-}
-
-private const val SIMPLE_LIGHTS_MAX: Int = 2
-private const val SIMPLE_LIGHTS_SPEC_W_DIRECT = -1.0f
-private const val SIMPLE_LIGHTS_SPEC_W_OFF = 0.0f
-private const val SIMPLE_LIGHTS_SPEC_W_POINT = 1.0f
-
-private class Pd00LightsExporter {
-    interface Builder {
-        fun addDirect(lightDirection: Vector4, color: Vector4)
-        fun addPoint(lightOrigin: Vector4, color: Vector4)
-    }
-
-    val simpleLightsSpecs = Vector4Array(SIMPLE_LIGHTS_MAX)
-    val simpleLightsColors = Vector4Array(SIMPLE_LIGHTS_MAX)
-
-    init {
-        rebuild { }
-    }
-
-    fun rebuild(build: (builder: Builder) -> Unit) {
-        simpleLightsSpecs.rewind()
-        simpleLightsColors.rewind()
-        build(object: Builder {
-            override fun addDirect(lightDirection: Vector4, color: Vector4) {
-                simpleLightsSpecs.putVector(lightDirection.x, lightDirection.y, lightDirection.z, SIMPLE_LIGHTS_SPEC_W_DIRECT)
-                simpleLightsColors.putVector(color)
-            }
-
-            override fun addPoint(lightOrigin: Vector4, color: Vector4) {
-                simpleLightsSpecs.putVector(lightOrigin.x, lightOrigin.y, lightOrigin.z, SIMPLE_LIGHTS_SPEC_W_POINT)
-                simpleLightsColors.putVector(color)
-            }
-        })
-        while (simpleLightsSpecs.hasRemaining()) {
-            simpleLightsSpecs.putVector(0.0f, 0.0f, 0.0f, SIMPLE_LIGHTS_SPEC_W_OFF)
-            simpleLightsColors.putVector(0.0f, 0.0f, 0.0f, 0.0f)
-        }
     }
 }
