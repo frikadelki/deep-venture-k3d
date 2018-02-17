@@ -15,3 +15,7 @@ fun isEpsilonZero(value: Float): Boolean {
 fun isEpsilonEqual(a: Float, b: Float): Boolean {
     return isEpsilonZero(a - b)
 }
+
+fun Vector4.isEpsilonZero(): Boolean {
+    return isEpsilonZero(length())
+}

@@ -6,6 +6,7 @@
 
 package org.frikadelki.deepv.common.mesh
 
+import org.frikadelki.deepv.pipeline.directShortBufferFromArray
 import org.frikadelki.deepv.pipeline.math.Vector4Array
 import org.frikadelki.deepv.pipeline.math.Vector4Components
 import org.frikadelki.deepv.pipeline.program.VertexAttributeHandle
@@ -28,13 +29,13 @@ data class AbcVertexAttributesBaked(private val positionsBuffer: FloatBuffer,
 }
 
 data class AbcMeshRaw(val vertexAttributes: AbcVertexAttributesRaw,
-                      val indexBuffer: ShortBuffer) {
+                      val indexBuffer: ShortArray) {
     data class Recipe(val vertexAttributesRecipe: AbcVertexAttributesRaw.Recipe)
 
     fun bake(recipe: Recipe): AbcMeshBaked {
         return AbcMeshBaked(
                 vertexAttributes.bake(recipe.vertexAttributesRecipe),
-                indexBuffer)
+                directShortBufferFromArray(indexBuffer))
     }
 }
 
@@ -42,6 +43,9 @@ data class AbcVertexAttributesRaw(val positionsBuffer: Vector4Array,
                                   val normalsBuffer: Vector4Array) {
     data class Recipe(val positionsComponents: Vector4Components,
                       val normalsComponents: Vector4Components)
+
+    constructor(verticesCount: Int)
+            : this(Vector4Array(verticesCount), Vector4Array(verticesCount))
 
     fun bake(recipe: Recipe): AbcVertexAttributesBaked {
         return AbcVertexAttributesBaked(

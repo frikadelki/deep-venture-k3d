@@ -72,16 +72,35 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
         return this
     }
 
-    fun pointWDivide() {
-        if (isEpsilonZero(w)) {
-            return
+    fun add(vector: Vector4): Vector4 {
+        vector.data.forEachIndexed { index, value ->
+            data[index] += value
         }
-        set(x/w, y/w, z/w, V4_POINT_W)
+        return this
     }
 
-    fun normalize() {
+    fun scalar(scalar: Float): Vector4 {
+        set(x*scalar, y*scalar, z*scalar, w*scalar)
+        return this
+    }
+
+    fun negate(): Vector4 {
+        scalar(-1.0f)
+        return this
+    }
+
+    fun pointWDivide(): Vector4 {
+        if (isEpsilonZero(w)) {
+            return this
+        }
+        set(x/w, y/w, z/w, V4_POINT_W)
+        return this
+    }
+
+    fun normalize(): Vector4 {
         val length = length()
         set(x/length, y/length, z/length, w/length)
+        return this
     }
 
     var x: Float

@@ -6,9 +6,7 @@
 
 package org.frikadelki.deepv.common.mesh
 
-import org.frikadelki.deepv.pipeline.directShortBuffer
 import org.frikadelki.deepv.pipeline.math.*
-import java.nio.ShortBuffer
 
 fun abcCubeMeshRaw(): AbcMeshRaw {
     val sideSize: Float = World.C1
@@ -18,17 +16,17 @@ fun abcCubeMeshRaw(): AbcMeshRaw {
     val sideIndicesTemplate = shortArrayOf(0, 1, 2, 0, 2, 3)
 
     val tmpMatrix = Matrix4()
-    val tmpSideIndicesArray = ShortArray(sideIndicesTemplate.size)
 
     val positionsBuffer = Vector4Array(sidesCount * pointsPerSide)
     val normalsBuffer = Vector4Array(sidesCount * pointsPerSide)
-    val indexBuffer = directShortBuffer(sidesCount * sideIndicesTemplate.size)
+    val indexBuffer = ShortArray(sidesCount * sideIndicesTemplate.size)
     var planeIndex = 0
 
     fun generatePlaneMesh(positionsArray: Vector4Array,
                           normalsArray: Vector4Array,
-                          indexBufferOutput: ShortBuffer,
-                          indexOffset: Int) {
+                          indexBufferOutput: ShortArray,
+                          indexOffset: Int,
+                          positionIndexOffset: Int) {
         positionsArray.putPoint(World.C0, World.C0, World.C0)
         positionsArray.putPoint(sideSize, World.C0, World.C0)
         positionsArray.putPoint(sideSize, sideSize, World.C0)
@@ -37,9 +35,8 @@ fun abcCubeMeshRaw(): AbcMeshRaw {
             normalsArray.putVector(World.C0, World.C0, World.C1, World.C0)
         }
         for ((index, value) in sideIndicesTemplate.withIndex()) {
-            tmpSideIndicesArray[index] = (indexOffset + value).toShort()
+            indexBufferOutput[indexOffset + index] = (positionIndexOffset + value).toShort()
         }
-        indexBufferOutput.put(tmpSideIndicesArray)
     }
 
     fun addSidePlane(transformer: (matrix: Matrix4) -> Matrix4) {
@@ -47,10 +44,15 @@ fun abcCubeMeshRaw(): AbcMeshRaw {
             throw IllegalStateException("Plain index out of bounds.")
         }
 
-        val indexOffset = planeIndex * pointsPerSide
-        val planePositionsBufferSlice = positionsBuffer.slice(indexOffset, pointsPerSide)
-        val planeNormalsBufferSlice = normalsBuffer.slice(indexOffset, pointsPerSide)
-        generatePlaneMesh(planePositionsBufferSlice, planeNormalsBufferSlice, indexBuffer, indexOffset)
+        val positionIndexOffset = planeIndex * pointsPerSide
+        val planePositionsBufferSlice = positionsBuffer.slice(positionIndexOffset, pointsPerSide)
+        val planeNormalsBufferSlice = normalsBuffer.slice(positionIndexOffset, pointsPerSide)
+        generatePlaneMesh(
+                planePositionsBufferSlice,
+                planeNormalsBufferSlice,
+                indexBuffer,
+                planeIndex * sideIndicesTemplate.size,
+                positionIndexOffset)
 
         val transformMatrix = transformer.invoke(tmpMatrix.setE())
         planePositionsBufferSlice.multiplyAll(transformMatrix)
