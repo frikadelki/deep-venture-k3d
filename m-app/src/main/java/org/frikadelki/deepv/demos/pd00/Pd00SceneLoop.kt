@@ -7,8 +7,8 @@
 package org.frikadelki.deepv.demos.pd00
 
 import android.opengl.GLES20
-import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.EmptyLump
+import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
 import org.frikadelki.deepv.common.mesh.AbcMeshBaked
@@ -77,8 +77,9 @@ private class Pd00Scene(val pipeline: Pipeline) {
 
     private val bubePawn = Pawn()
     init {
-        bubePawn.transform.selfRotate(v4AxisZ(), 15.0f)
-        bubePawn.transform.worldTranslate(v4Vector(x = -0.5f, z = 0.2f))
+        bubePawn.transform.selfRotate(v4AxisZ(), 25.0f)
+        bubePawn.transform.selfRotate(v4AxisY(), 25.0f)
+        bubePawn.transform.worldTranslate(v4Vector(y = -0.6f, z = -0.2f))
 
         val meshPainterLump = Pd00AbcMeshPainterLump(
                 mainProgram,
@@ -124,6 +125,13 @@ private class Pd00Scene(val pipeline: Pipeline) {
     fun onDrawFrame() {
         pipeline.setClearColor(0.1f, 0.4f, 0.4f, 1.0f)
         pipeline.clearColorBuffer()
+
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST)
+        GLES20.glDepthFunc(GLES20.GL_LEQUAL)
+        GLES20.glDepthMask(true)
+        GLES20.glClearDepthf(1.0f)
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT)
+
         pipeline.setCullingEnabled(true)
 
         scene.onDraw()
