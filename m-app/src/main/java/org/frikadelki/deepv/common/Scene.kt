@@ -20,6 +20,10 @@ class Scene {
         rootPawn.onDraw(this, DrawContext())
     }
 
+    fun onUpdateAnimations(deltaMillis: Long) {
+        rootPawn.onUpdateAnimations(deltaMillis)
+    }
+
     fun addPawn(pawn: Pawn) {
         rootPawn.addOwnedPawn(pawn)
     }

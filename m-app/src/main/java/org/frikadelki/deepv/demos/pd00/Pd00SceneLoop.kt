@@ -8,6 +8,7 @@ package org.frikadelki.deepv.demos.pd00
 
 import android.opengl.GLES20
 import org.frikadelki.deepv.common.Lights
+import org.frikadelki.deepv.common.EmptyLump
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
 import org.frikadelki.deepv.common.mesh.AbcMeshBaked
@@ -66,6 +67,12 @@ private class Pd00Scene(val pipeline: Pipeline) {
                 v4Color(0.63671875f, 0.76953125f, 0.22265625f, 1.0f),
                 v4Color(0.9f, 0.7f, 0.1f, 3.5f))
         scubePawn.addLump(meshPainterLump)
+        scubePawn.addLump(object: EmptyLump() {
+            override fun onUpdateAnimations(deltaMillis: Long) {
+                val rotationAngle = deltaMillis * scubeRotationSpeed
+                scubePawn.transform.selfRotate(v4AxisZ(), rotationAngle)
+            }
+        })
     }
 
     private val bubePawn = Pawn()
@@ -111,8 +118,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
     // update & draw logic
 
     fun onUpdateAnimations(deltaMillis: Long) {
-        val rotationAngle = deltaMillis * scubeRotationSpeed
-        scubePawn.transform.selfRotate(v4AxisZ(), rotationAngle)
+        scene.onUpdateAnimations(deltaMillis)
     }
 
     fun onDrawFrame() {

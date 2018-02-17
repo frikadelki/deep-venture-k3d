@@ -6,7 +6,7 @@
 
 package org.frikadelki.deepv.demos.pd00
 
-import org.frikadelki.deepv.common.Lump
+import org.frikadelki.deepv.common.EmptyLump
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
 import org.frikadelki.deepv.common.mesh.AbcMeshBaked
@@ -15,7 +15,8 @@ import org.frikadelki.deepv.pipeline.math.Vector4
 class Pd00AbcMeshPainterLump(private val program: Pd00Program,
                              private val mesh: AbcMeshBaked,
                              private val colorDiffuse: Vector4,
-                             private val colorSpecular: Vector4) : Lump {
+                             private val colorSpecular: Vector4)
+    : EmptyLump() {
     override fun onDraw(pawn: Pawn, scene: Scene, context: Scene.DrawContext) {
         program.enable()
         program.setCamera(scene.camera)

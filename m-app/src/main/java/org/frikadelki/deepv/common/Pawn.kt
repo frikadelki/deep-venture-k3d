@@ -6,10 +6,6 @@
 
 package org.frikadelki.deepv.common
 
-interface Lump {
-    fun onDraw(pawn: Pawn, scene: Scene, context: Scene.DrawContext)
-}
-
 class Pawn {
     private val lumps = mutableListOf<Lump>()
     private val owned = mutableListOf<Pawn>()
@@ -28,5 +24,10 @@ class Pawn {
         //TODO: implement transforms matrix stack
         lumps.forEach { it.onDraw(this, scene, context) }
         owned.forEach { it.onDraw(scene, context) }
+    }
+
+    fun onUpdateAnimations(deltaMillis: Long) {
+        lumps.forEach { it.onUpdateAnimations(deltaMillis) }
+        owned.forEach { it.onUpdateAnimations(deltaMillis) }
     }
 }
