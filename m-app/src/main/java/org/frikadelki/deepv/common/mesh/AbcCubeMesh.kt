@@ -4,18 +4,13 @@
  * Created by frikadelki on 2018/2/15
  */
 
-package org.frikadelki.deepv.common
+package org.frikadelki.deepv.common.mesh
 
 import org.frikadelki.deepv.pipeline.directShortBuffer
 import org.frikadelki.deepv.pipeline.math.*
 import java.nio.ShortBuffer
 
-
-data class RawMesh(val positionsBuffer: Vector4Array,
-                   val normalsBuffer: Vector4Array,
-                   val indexBuffer: ShortBuffer)
-
-fun rawCubeMesh(): RawMesh {
+fun abcCubeMeshRaw(): AbcMeshRaw {
     val sideSize: Float = World.C1
 
     val sidesCount = 6
@@ -107,5 +102,5 @@ fun rawCubeMesh(): RawMesh {
     normalsBuffer.multiplyAll(tmpMatrix)
     normalsBuffer.normalizeAll()
 
-    return RawMesh(positionsBuffer, normalsBuffer, indexBuffer)
+    return AbcMeshRaw(AbcVertexAttributesRaw(positionsBuffer, normalsBuffer), indexBuffer)
 }

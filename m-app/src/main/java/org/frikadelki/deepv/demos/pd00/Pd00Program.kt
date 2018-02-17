@@ -9,12 +9,14 @@ package org.frikadelki.deepv.demos.pd00
 import org.frikadelki.deepv.common.Camera
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.LightsSnippet
+import org.frikadelki.deepv.common.mesh.AbcVertexAttributesBaked
 import org.frikadelki.deepv.pipeline.Pipeline
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
-import org.frikadelki.deepv.pipeline.math.Vector4Components
-import org.frikadelki.deepv.pipeline.program.*
-import java.nio.FloatBuffer
+import org.frikadelki.deepv.pipeline.program.Program
+import org.frikadelki.deepv.pipeline.program.ProgramSource
+import org.frikadelki.deepv.pipeline.program.UniformHandle
+import org.frikadelki.deepv.pipeline.program.VertexAttributeHandle
 import java.nio.ShortBuffer
 
 class Pd00Program(pipeline: Pipeline) {
@@ -98,20 +100,10 @@ class Pd00Program(pipeline: Pipeline) {
         modelColorSpecular.setVector(colorSpecular)
     }
 
-    fun setVertexPosition(buffer: FloatBuffer, components: Vector4Components) {
-        if (components.greaterThan(Vector4Components.THREE)) {
-            throw ProgramException("Can't send that much components for this attribute.")
-        }
+    fun setVertexAttributes(attributes: AbcVertexAttributesBaked) {
         vertexPosition.enable()
-        vertexPosition.setData(buffer, components, VertexAttributeHandle.ComponentType.FLOAT)
-    }
-
-    fun setVertexNormals(buffer: FloatBuffer, components: Vector4Components) {
-        if (components.greaterThan(Vector4Components.THREE)) {
-            throw ProgramException("Can't send that much components for this attribute.")
-        }
         vertexNormal.enable()
-        vertexNormal.setData(buffer, components, VertexAttributeHandle.ComponentType.FLOAT)
+        attributes.bind(vertexPosition, vertexNormal)
     }
 
     fun drawTriangles(indexBuffer: ShortBuffer) {

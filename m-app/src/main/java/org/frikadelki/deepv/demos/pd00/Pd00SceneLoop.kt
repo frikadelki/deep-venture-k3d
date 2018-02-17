@@ -10,12 +10,13 @@ import android.opengl.GLES20
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
+import org.frikadelki.deepv.common.mesh.AbcMeshBaked
+import org.frikadelki.deepv.common.mesh.AbcMeshRaw
+import org.frikadelki.deepv.common.mesh.AbcVertexAttributesRaw
+import org.frikadelki.deepv.common.mesh.abcCubeMeshRaw
 import org.frikadelki.deepv.main.SceneLoop
 import org.frikadelki.deepv.pipeline.Pipeline
-import org.frikadelki.deepv.pipeline.math.v4AxisZ
-import org.frikadelki.deepv.pipeline.math.v4Color
-import org.frikadelki.deepv.pipeline.math.v4Point
-import org.frikadelki.deepv.pipeline.math.v4Vector
+import org.frikadelki.deepv.pipeline.math.*
 
 
 class Pd00SceneLoop : SceneLoop {
@@ -48,7 +49,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
     // shared resources
     private val mainProgram = Pd00Program(pipeline)
 
-    private val cubeMesh = pd00CubeMesh()
+    private val cubeMesh = abcCubeBakedMesh()
 
     // scene pawns
 
@@ -59,7 +60,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
         scubePawn.transform.selfScale(v4Point(scubeScaleFactor, scubeScaleFactor, scubeScaleFactor))
         scubePawn.transform.worldTranslate(v4Vector(y = 0.7f))
 
-        val meshPainterLump = Pd0MeshPainterLump(
+        val meshPainterLump = Pd00AbcMeshPainterLump(
                 mainProgram,
                 cubeMesh,
                 v4Color(0.63671875f, 0.76953125f, 0.22265625f, 1.0f),
@@ -72,7 +73,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
         bubePawn.transform.selfRotate(v4AxisZ(), 15.0f)
         bubePawn.transform.worldTranslate(v4Vector(x = -0.5f, z = 0.2f))
 
-        val meshPainterLump = Pd0MeshPainterLump(
+        val meshPainterLump = Pd00AbcMeshPainterLump(
                 mainProgram,
                 cubeMesh,
                 v4Color(0.63671875f, 0.1f, 0.22265625f, 1.0f),
@@ -88,7 +89,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
     val cameraLookAtCenter = v4Point()
     val cameraUp = v4AxisZ()
 
-    private val sceneAmbientColor = v4Color(0.3f, 0.3f, 0.3f)
+    private val sceneAmbientColor = v4Color(0.4f, 0.4f, 0.4f)
     private val sceneSun0 = Lights.Direct(
             v4Vector(x = -1.0f, z = 1.0f),
             v4Color(0.3f, 0.3f, 0.3f))
@@ -130,4 +131,10 @@ private class Pd00Scene(val pipeline: Pipeline) {
     fun onDispose() {
         mainProgram.dispose()
     }
+}
+
+private fun abcCubeBakedMesh(): AbcMeshBaked {
+    val exportComponents = Vector4Components.THREE
+    val mesh = abcCubeMeshRaw()
+    return mesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(exportComponents, exportComponents)))
 }

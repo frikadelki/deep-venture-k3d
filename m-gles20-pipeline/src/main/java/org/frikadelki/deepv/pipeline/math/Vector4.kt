@@ -274,7 +274,7 @@ class Vector4Array internal constructor(private val data: FloatArray,
             access.writeTo(output, components)
             advancePosition()
         }
-        output.position(0)
+        output.rewind()
         return output
     }
 
