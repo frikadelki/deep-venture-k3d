@@ -73,19 +73,29 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
     }
 
     fun add(vector: Vector4): Vector4 {
-        vector.data.forEachIndexed { index, value ->
-            data[index] += value
+        for(i in 0 until VECTOR4_SIZE) {
+            data[offset + i] += vector.data[vector.offset + i]
         }
         return this
     }
 
-    fun scalar(scalar: Float): Vector4 {
+    fun cross(v2: Vector4, out: Vector4 = Vector4()): Vector4 {
+        val v1 = this
+        out.set(
+                v1.y * v2.z - v1.z * v2.y,
+                v1.z * v2.x - v1.x * v2.z,
+                v1.x * v2.y - v1.y * v2.x,
+                0.0f)
+        return out
+    }
+
+    fun scale(scalar: Float): Vector4 {
         set(x*scalar, y*scalar, z*scalar, w*scalar)
         return this
     }
 
     fun negate(): Vector4 {
-        scalar(-1.0f)
+        scale(-1.0f)
         return this
     }
 
@@ -226,6 +236,24 @@ class Vector4Array internal constructor(private val data: FloatArray,
         }
     }
 
+    fun replaceVector(visitor: (vector: Vector4) -> Unit) {
+        checkRemaining()
+        visitor(access)
+        advancePosition()
+    }
+
+    fun readVector(out: Vector4) {
+        checkRemaining()
+        out.set(access)
+        advancePosition()
+    }
+
+    fun readVector(out: Vector4Array) {
+        checkRemaining()
+        out.putVector(access)
+        advancePosition()
+    }
+
     fun putVector(vector: Vector4) {
         checkRemaining()
         access.set(vector)
@@ -266,6 +294,10 @@ class Vector4Array internal constructor(private val data: FloatArray,
             access.normalize()
             advancePosition()
         }
+    }
+
+    operator fun get(index: Int): Vector4 {
+        return Vector4(data, dataOffset + index * VECTOR4_SIZE)
     }
 
     fun slice(vectorsOffset: Int, sliceVectorsCount: Int): Vector4Array {

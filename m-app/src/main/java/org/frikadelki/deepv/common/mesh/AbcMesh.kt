@@ -32,6 +32,13 @@ data class AbcMeshRaw(val vertexAttributes: AbcVertexAttributesRaw,
                       val indexBuffer: ShortArray) {
     data class Recipe(val vertexAttributesRecipe: AbcVertexAttributesRaw.Recipe)
 
+    constructor(verticesCount: Int, indicesCount: Int)
+            : this(AbcVertexAttributesRaw(verticesCount), ShortArray(indicesCount))
+
+    fun vertexCount(): Int {
+        return vertexAttributes.vertexCount()
+    }
+
     fun bake(recipe: Recipe): AbcMeshBaked {
         return AbcMeshBaked(
                 vertexAttributes.bake(recipe.vertexAttributesRecipe),
@@ -44,8 +51,18 @@ data class AbcVertexAttributesRaw(val positionsBuffer: Vector4Array,
     data class Recipe(val positionsComponents: Vector4Components,
                       val normalsComponents: Vector4Components)
 
+    init {
+        if (positionsBuffer.vectorsCount != normalsBuffer.vectorsCount) {
+            throw IllegalArgumentException()
+        }
+    }
+
     constructor(verticesCount: Int)
             : this(Vector4Array(verticesCount), Vector4Array(verticesCount))
+
+    fun vertexCount(): Int {
+        return positionsBuffer.vectorsCount
+    }
 
     fun bake(recipe: Recipe): AbcVertexAttributesBaked {
         return AbcVertexAttributesBaked(

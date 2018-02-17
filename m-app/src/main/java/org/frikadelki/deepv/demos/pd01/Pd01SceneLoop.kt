@@ -55,7 +55,8 @@ private class Pd01Scene(val pipeline: Pipeline) {
     private val morphSphere = Pawn()
     init {
         val sphereFactory = AbcMorphingSphereFactory()
-        val rawMesh = sphereFactory.generateFlatMeshZero()
+        val rawMesh = sphereFactory.generateSphericalMesh(5)
+
         val bakedMesh = rawMesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE)))
         val morphingMesh = AbcMorphingMesh(
                 listOf(AbcMorphingMeshFrame(bakedMesh.vertexAttributes)),
@@ -80,7 +81,7 @@ private class Pd01Scene(val pipeline: Pipeline) {
     }
 
     private val sceneBulb0 = Lights.Point(
-            v4Point(x = 2.0f, z = 2.0f),
+            v4Point(x = 2.0f, y = 0.2f, z = 2.0f),
             v4Color(0.5f, 0.5f, 0.5f))
     init {
         scene.lights.ambient.set(0.4f, 0.4f, 0.4f)
