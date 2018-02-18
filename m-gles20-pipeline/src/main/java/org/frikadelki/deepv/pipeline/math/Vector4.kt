@@ -272,6 +272,23 @@ class Vector4Array internal constructor(private val data: FloatArray,
         advancePosition()
     }
 
+    fun putAll(other: Vector4Array) {
+        if (remaining() < other.remaining()) {
+            throw IllegalArgumentException()
+        }
+        // TODO: can be optimized with direct array chunk copy
+        while (other.hasRemaining()) {
+            other.readVector(this)
+        }
+    }
+
+    fun forEachRemaining(visitor: (vector: Vector4) -> Unit) {
+        while (hasRemaining()) {
+            visitor(access)
+            advancePosition()
+        }
+    }
+
     fun multiplyAll(matrix: Matrix4) {
         rewind()
         for(i in 0 until vectorsCount) {

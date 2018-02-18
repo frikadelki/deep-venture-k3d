@@ -25,18 +25,21 @@ class Transform {
 
     val modelMatrix by modelMatrixProperty
 
-    fun selfScale(scale: Vector4) {
+    fun selfScale(scale: Vector4): Transform {
         selfScaleMatrix.scale(scale)
         modelMatrixProperty.markDirty()
+        return this
     }
 
-    fun selfRotate(axis: Vector4, angleDegrees: Float) {
+    fun selfRotate(axis: Vector4, angleDegrees: Float): Transform {
         selfRotationMatrix.rotate(axis, angleDegrees)
         modelMatrixProperty.markDirty()
+        return this
     }
 
-    fun worldTranslate(d: Vector4) {
+    fun worldTranslate(d: Vector4): Transform {
         worldPositionMatrix.translate(d)
         modelMatrixProperty.markDirty()
+        return this
     }
 }

@@ -24,6 +24,11 @@ fun Matrix4.setPerspective(fovYDegrees: Float, aspectRatioWH: Float, zNear: Floa
     return setFrustum(left, right, bottom, top, zNear, zFar)
 }
 
+fun Matrix4.setOrtho(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float): Matrix4 {
+    MatrixUtils.orthoM(rawData, rawOffset, left, right, bottom, top, near, far)
+    return this
+}
+
 fun Matrix4.setLookAt(eye: Vector4, center: Vector4, up: Vector4): Matrix4 {
     MatrixUtils.setLookAtM(rawData, rawOffset,
             eye.x, eye.y, eye.z,

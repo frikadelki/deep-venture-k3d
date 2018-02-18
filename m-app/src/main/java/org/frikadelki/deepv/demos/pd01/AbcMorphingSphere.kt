@@ -8,28 +8,46 @@ package org.frikadelki.deepv.demos.pd01
 
 import org.frikadelki.deepv.common.mesh.AbcMeshRaw
 import org.frikadelki.deepv.common.mesh.AbcVertexAttributesRaw
-import org.frikadelki.deepv.pipeline.math.Vector4
-import org.frikadelki.deepv.pipeline.math.Vector4Array
-import org.frikadelki.deepv.pipeline.math.World
-import org.frikadelki.deepv.pipeline.math.v4Point
+import org.frikadelki.deepv.pipeline.math.*
 
 
 class AbcMorphingSphereFactory {
     private val radius = World.C1
     private val center = v4Point(World.C0, World.C0, World.C0)
 
-    private val tetrahedronMeshFactory = AbcTetrahedronMeshFactory()
+    private val tetrahedronMeshFactory = AbcOctahedronMeshFactory()
+
+    fun generateMorphingMesh(detailLevel: Int): AbcMorphingMesh {
+        val flatMesh = generateFlatMesh(detailLevel)
+        val sphereMeshAttributes = flatMesh.vertexAttributes.copy()
+        arrangedOnSphere(sphereMeshAttributes)
+
+        val flatBakedMesh = flatMesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE)))
+        val sphereBakedMeshAttributes = sphereMeshAttributes.bake(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE))
+
+        val morphingMesh = AbcMorphingMesh(flatBakedMesh.vertexAttributes, flatBakedMesh.indexBuffer)
+        morphingMesh.addFrame(sphereBakedMeshAttributes, 5000)
+        morphingMesh.addFrame(sphereBakedMeshAttributes, 2000)
+        morphingMesh.addFrame(flatBakedMesh.vertexAttributes, 3000)
+
+        return morphingMesh
+    }
 
     fun generateFlatMesh(detailLevel: Int): AbcMeshRaw {
         return tetrahedronMeshFactory.generateMesh(detailLevel)
     }
 
     fun generateSphericalMesh(detailLevel: Int): AbcMeshRaw {
+        val mesh = tetrahedronMeshFactory.generateMesh(detailLevel)
+        arrangedOnSphere(mesh.vertexAttributes)
+        return mesh
+    }
+
+    private fun arrangedOnSphere(attributes: AbcVertexAttributesRaw) {
         val tmpNormal = Vector4()
 
-        val flatMesh = tetrahedronMeshFactory.generateMesh(detailLevel)
-        val positionsBuffer = flatMesh.vertexAttributes.positionsBuffer
-        val normalsBuffer = flatMesh.vertexAttributes.normalsBuffer
+        val positionsBuffer = attributes.positionsBuffer
+        val normalsBuffer = attributes.normalsBuffer
         positionsBuffer.rewind()
         normalsBuffer.rewind()
         while (positionsBuffer.hasRemaining()) {
@@ -39,8 +57,6 @@ class AbcMorphingSphereFactory {
                 it.set(tmpNormal.scale(radius).point())
             }
         }
-
-        return flatMesh
     }
 
     private fun normalForPoint(point: Vector4, out: Vector4 = Vector4()): Vector4 {
@@ -49,7 +65,7 @@ class AbcMorphingSphereFactory {
     }
 }
 
-class AbcTetrahedronMeshFactory {
+class AbcOctahedronMeshFactory {
     private val radius = World.C1
     private val center = v4Point(World.C0, World.C0, World.C0)
 
@@ -166,24 +182,60 @@ class AbcTetrahedronMeshFactory {
                 6, 7, 8,
                 9, 10, 11)
 
-        val rawAttributes = AbcVertexAttributesRaw(basePositions.size)
-        rawAttributes.positionsBuffer.rewind()
-        basePositions.forEach {
-            rawAttributes.positionsBuffer.putVector(it)
-        }
-        rawAttributes.normalsBuffer.rewind()
-        for (i in 0 until basePositions.size/pointPerTriangle) {
-            val pA = basePositions[i + 0]
-            val pB = basePositions[i + 1]
-            val pC = basePositions[i + 2]
+        fun generateTetrahedron(positions: Vector4Array, normals: Vector4Array) {
+            positions.rewind()
+            normals.rewind()
+            basePositions.forEach {
+                positions.putVector(it)
+            }
+            for (i in 0 until basePositions.size/pointPerTriangle) {
+                val pA = basePositions[i + 0]
+                val pB = basePositions[i + 1]
+                val pC = basePositions[i + 2]
 
-            val abv = tmpVectorA.set(pA).negate().add(pB)
-            val bcv = tmpVectorB.set(pB).negate().add(pC)
-            val normal = abv.cross(bcv).normalize()
-            for(j in 0 until pointPerTriangle) {
-                rawAttributes.normalsBuffer.putVector(normal)
+                val abv = tmpVectorA.set(pA).negate().add(pB)
+                val bcv = tmpVectorB.set(pB).negate().add(pC)
+                val normal = abv.cross(bcv).normalize()
+                for(j in 0 until pointPerTriangle) {
+                    normals.putVector(normal)
+                }
             }
         }
-        return AbcMeshRaw(rawAttributes, baseIndices)
+
+        fun mirrorZ(inPositions: Vector4Array, inNormals: Vector4Array,
+                    outPositions: Vector4Array, outNormals: Vector4Array) {
+            inPositions.rewind()
+            outPositions.rewind()
+            inPositions.forEachRemaining {
+                outPositions.putVector(it.x, it.y, -it.z, it.w)
+            }
+            inNormals.rewind()
+            outNormals.rewind()
+            inNormals.forEachRemaining {
+                outNormals.putVector(it.x, it.y, -it.z, it.w)
+            }
+        }
+
+        val tetrahedronVerticesCount = basePositions.size
+        val octahedronVerticesCount = tetrahedronVerticesCount * 2
+        val positionsBuffer = Vector4Array(octahedronVerticesCount)
+        val normalBuffer = Vector4Array(octahedronVerticesCount)
+
+        val topPositions = positionsBuffer.slice(0, tetrahedronVerticesCount)
+        val topNormals = normalBuffer.slice(0, tetrahedronVerticesCount)
+        generateTetrahedron(topPositions, topNormals)
+
+        val bottomPositions = positionsBuffer.slice(tetrahedronVerticesCount, tetrahedronVerticesCount)
+        val bottomNormals = normalBuffer.slice(tetrahedronVerticesCount, tetrahedronVerticesCount)
+        mirrorZ(topPositions, topNormals, bottomPositions, bottomNormals)
+
+        val rawAttributes = AbcVertexAttributesRaw(positionsBuffer, normalBuffer)
+        val indices = ShortArray(baseIndices.size * 2)
+        System.arraycopy(baseIndices, 0, indices, 0, baseIndices.size)
+        for(i in 0 until baseIndices.size) {
+            indices[baseIndices.size + i] = (tetrahedronVerticesCount + baseIndices[baseIndices.size - 1 - i]).toShort()
+        }
+
+        return AbcMeshRaw(rawAttributes, indices)
     }
 }

@@ -10,14 +10,12 @@ import android.opengl.GLES20
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
-import org.frikadelki.deepv.common.mesh.AbcMeshRaw
-import org.frikadelki.deepv.common.mesh.AbcVertexAttributesRaw
 import org.frikadelki.deepv.main.SceneLoop
 import org.frikadelki.deepv.pipeline.Pipeline
-import org.frikadelki.deepv.pipeline.math.Vector4Components
 import org.frikadelki.deepv.pipeline.math.v4AxisZ
 import org.frikadelki.deepv.pipeline.math.v4Color
 import org.frikadelki.deepv.pipeline.math.v4Point
+import org.frikadelki.deepv.pipeline.math.v4Vector
 
 
 class Pd01SceneLoop : SceneLoop {
@@ -48,25 +46,23 @@ class Pd01SceneLoop : SceneLoop {
 
 private class Pd01Scene(val pipeline: Pipeline) {
     // shared resources
-    private val abcMeshMorphingProgram = AbcMeshMorphingProgram(pipeline)
+    private val abcMeshMorphingProgram = AbcMorphingMeshProgram(pipeline)
 
     // scene pawns
 
     private val morphSphere = Pawn()
     init {
         val sphereFactory = AbcMorphingSphereFactory()
-        val rawMesh = sphereFactory.generateSphericalMesh(5)
-
-        val bakedMesh = rawMesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE)))
-        val morphingMesh = AbcMorphingMesh(
-                listOf(AbcMorphingMeshFrame(bakedMesh.vertexAttributes)),
-                bakedMesh.indexBuffer)
-
-        morphSphere.addLump(AbcMeshMorphingLump(
+        val morphingMesh = sphereFactory.generateMorphingMesh(6)
+        morphSphere.addLump(AbcMorphingMeshLump(
                 abcMeshMorphingProgram,
                 morphingMesh,
                 v4Color(0.8f, 0.2f, 0.4f),
                 v4Color(0.5f, 0.5f, 0.5f, 20.0f)))
+
+        morphSphere.transform
+                .selfRotate(v4AxisZ(), 22.5f)
+                .worldTranslate(v4Vector(x = -0.3f))
     }
 
     // scene

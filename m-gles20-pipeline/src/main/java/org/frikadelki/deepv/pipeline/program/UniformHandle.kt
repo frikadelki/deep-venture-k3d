@@ -13,6 +13,11 @@ import org.frikadelki.deepv.pipeline.math.Vector4
 import org.frikadelki.deepv.pipeline.math.Vector4Array
 
 class UniformHandle internal constructor(private val handle: Int, private val checkDisposed: () -> Unit) {
+    fun setFloat(float: Float) {
+        checkDisposed()
+        GLES20.glUniform1f(handle, float)
+    }
+
     fun setVector(vector: Vector4) {
         setVector(vector.rawData, UniformVecSize.FOUR, 1, vector.rawOffset)
     }

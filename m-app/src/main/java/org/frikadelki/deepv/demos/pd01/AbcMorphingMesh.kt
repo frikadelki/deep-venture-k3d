@@ -17,27 +17,86 @@ import org.frikadelki.deepv.pipeline.program.UniformHandle
 import org.frikadelki.deepv.pipeline.program.VertexAttributeHandle
 import java.nio.ShortBuffer
 
-class AbcMorphingMeshFrame(val vertexAttributes: AbcVertexAttributesBaked) {
-}
-
-class AbcMorphingMesh(private val frames: List<AbcMorphingMeshFrame>,
+class AbcMorphingMesh(zeroFrameAttributes: AbcVertexAttributesBaked,
                       val indexBuffer: ShortBuffer) {
-    init {
-        if (frames.isEmpty()) {
-            throw IllegalArgumentException("Must have at least one frame.")
+    class Frame(val vertexAttributes: AbcVertexAttributesBaked,
+                val keyTimeMillis: Long)
+
+    class Step(val first: Frame, val second: Frame) {
+        fun timeHit(timeMillis: Long): Boolean {
+            return first.keyTimeMillis <= timeMillis && timeMillis <= second.keyTimeMillis
         }
     }
 
-    fun last(): AbcMorphingMeshFrame {
-        return frames[frames.size - 1]
+    private val frames = mutableListOf(
+            Frame(zeroFrameAttributes, 0))
+
+    var lengthMillis: Long = 0
+        private set
+
+    fun addFrame(attributes: AbcVertexAttributesBaked, animateInMillis: Long) {
+        if (animateInMillis <= 0) {
+            throw IllegalArgumentException()
+        }
+        lengthMillis += animateInMillis
+        frames.add(Frame(attributes, lengthMillis))
+    }
+
+    fun find(millis: Long): Step {
+        val it = frames.iterator()
+        var previous = it.next()
+        var next = previous
+        while (it.hasNext()) {
+            previous = next
+            next = it.next()
+            if (millis <= next.keyTimeMillis) {
+                break
+            }
+        }
+        return Step(previous, next)
+    }
+
+    fun last(): Frame {
+        return frames.last()
     }
 }
 
-class AbcMeshMorphingLump(private val program: AbcMeshMorphingProgram,
+class AbcMorphingMeshInterpolator(private val mesh: AbcMorphingMesh) {
+    private var timeMillis: Long = 0
+
+    var currentFrames = mesh.find(timeMillis)
+        private set
+
+    var interpolatedTime: Float = 0.0f
+        private set
+
+    fun update(deltaMillis: Long) {
+        timeMillis += deltaMillis
+        timeMillis %= mesh.lengthMillis
+        if (!currentFrames.timeHit(timeMillis)) {
+            currentFrames = mesh.find(timeMillis)
+            if (!currentFrames.timeHit(timeMillis)) {
+                throw IllegalStateException("Broken morphing mesh.")
+            }
+        }
+        updateInterpolatedTime()
+    }
+
+    private fun updateInterpolatedTime() {
+        val numerator = (timeMillis - currentFrames.first.keyTimeMillis).toFloat()
+        val denominator = (currentFrames.second.keyTimeMillis - currentFrames.first.keyTimeMillis).toFloat()
+        interpolatedTime = numerator / denominator
+    }
+}
+
+class AbcMorphingMeshLump(private val program: AbcMorphingMeshProgram,
                           private val mesh: AbcMorphingMesh,
                           private val colorDiffuse: Vector4,
                           private val colorSpecular: Vector4)
     : Lump {
+
+    private val morphingInterpolator = AbcMorphingMeshInterpolator(mesh)
+
     override fun onDraw(pawn: Pawn, scene: Scene, context: Scene.DrawContext) {
         program.enable()
         program.setCamera(scene.camera)
@@ -46,17 +105,18 @@ class AbcMeshMorphingLump(private val program: AbcMeshMorphingProgram,
         program.setModelMatrix(pawn.transform.modelMatrix)
         program.setModelColor(colorDiffuse, colorSpecular)
 
-        program.setVertexAttributes(mesh.last().vertexAttributes)
+        program.setMorphingMesh(morphingInterpolator)
         program.drawTriangles(mesh.indexBuffer)
 
         program.disable()
     }
 
     override fun onUpdateAnimations(deltaMillis: Long) {
+        morphingInterpolator.update(deltaMillis)
     }
 }
 
-class AbcMeshMorphingProgram(val pipeline: Pipeline) {
+class AbcMorphingMeshProgram(val pipeline: Pipeline) {
     private val lightsSnippet = LightsSnippet(2)
 
     private val programSource = ProgramSource(
@@ -67,13 +127,19 @@ class AbcMeshMorphingProgram(val pipeline: Pipeline) {
 
                 uniform mat4 modelMatrix;
 
-                attribute vec3 vPosition;
-                attribute vec3 vNormal;
+                uniform float vInterpolatedTime;
+                attribute vec3 vPositionA;
+                attribute vec3 vNormalA;
+                attribute vec3 vPositionB;
+                attribute vec3 vNormalB;
 
                 varying vec3 varPosition;
                 varying vec3 varNormal;
 
                 void main() {
+                    vec3 vPosition = mix(vPositionA, vPositionB, vInterpolatedTime);
+                    vec3 vNormal = mix(vNormalA, vNormalB, vInterpolatedTime);
+
                     vec4 worldPosition = modelMatrix * vec4(vPosition, 1.0);
                     varPosition = vec3(worldPosition) / worldPosition.w;
                     varNormal = normalize(modelMatrix * vec4(vNormal, 0.0)).xyz;
@@ -112,8 +178,11 @@ class AbcMeshMorphingProgram(val pipeline: Pipeline) {
     private val modelColorDiffuse: UniformHandle = program.uniform("modelColorDiffuse")
     private val modelColorSpecular: UniformHandle = program.uniform("modelColorSpecular")
 
-    private val vertexPosition: VertexAttributeHandle = program.vertexAttribute("vPosition")
-    private val vertexNormal: VertexAttributeHandle = program.vertexAttribute("vNormal")
+    private val vertexInterpolatedTime: UniformHandle = program.uniform("vInterpolatedTime")
+    private val vertexPositionA: VertexAttributeHandle = program.vertexAttribute("vPositionA")
+    private val vertexNormalA: VertexAttributeHandle = program.vertexAttribute("vNormalA")
+    private val vertexPositionB: VertexAttributeHandle = program.vertexAttribute("vPositionB")
+    private val vertexNormalB: VertexAttributeHandle = program.vertexAttribute("vNormalB")
 
     fun enable() {
         program.use()
@@ -137,10 +206,18 @@ class AbcMeshMorphingProgram(val pipeline: Pipeline) {
         modelColorSpecular.setVector(colorSpecular)
     }
 
-    fun setVertexAttributes(attributes: AbcVertexAttributesBaked) {
-        vertexPosition.enable()
-        vertexNormal.enable()
-        attributes.bind(vertexPosition, vertexNormal)
+    fun setMorphingMesh(interpolator: AbcMorphingMeshInterpolator) {
+        vertexInterpolatedTime.setFloat(interpolator.interpolatedTime)
+
+        vertexPositionA.enable()
+        vertexNormalA.enable()
+        interpolator.currentFrames.first
+                .vertexAttributes.bind(vertexPositionA, vertexNormalA)
+
+        vertexPositionB.enable()
+        vertexNormalB.enable()
+        interpolator.currentFrames.second
+                .vertexAttributes.bind(vertexPositionB, vertexNormalB)
     }
 
     fun drawTriangles(indexBuffer: ShortBuffer) {
@@ -148,8 +225,10 @@ class AbcMeshMorphingProgram(val pipeline: Pipeline) {
     }
 
     fun disable() {
-        vertexPosition.disable()
-        vertexNormal.disable()
+        vertexPositionA.disable()
+        vertexNormalA.disable()
+        vertexPositionB.disable()
+        vertexNormalB.disable()
     }
 
     fun dispose() {

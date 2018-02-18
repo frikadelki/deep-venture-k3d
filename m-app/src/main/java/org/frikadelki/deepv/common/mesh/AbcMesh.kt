@@ -13,13 +13,13 @@ import org.frikadelki.deepv.pipeline.program.VertexAttributeHandle
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 
-data class AbcMeshBaked(val vertexAttributes: AbcVertexAttributesBaked,
+class AbcMeshBaked(val vertexAttributes: AbcVertexAttributesBaked,
                         val indexBuffer: ShortBuffer)
 
-data class AbcVertexAttributesBaked(private val positionsBuffer: FloatBuffer,
-                                    private val positionsComponents: Vector4Components,
-                                    private val normalsBuffer: FloatBuffer,
-                                    private val normalsComponents: Vector4Components) {
+class AbcVertexAttributesBaked(private val positionsBuffer: FloatBuffer,
+                               private val positionsComponents: Vector4Components,
+                               private val normalsBuffer: FloatBuffer,
+                               private val normalsComponents: Vector4Components) {
     fun bind(positionsHandle: VertexAttributeHandle, normalsHandle: VertexAttributeHandle) {
         positionsBuffer.rewind()
         positionsHandle.setData(positionsBuffer, positionsComponents, VertexAttributeHandle.ComponentType.FLOAT)
@@ -28,9 +28,9 @@ data class AbcVertexAttributesBaked(private val positionsBuffer: FloatBuffer,
     }
 }
 
-data class AbcMeshRaw(val vertexAttributes: AbcVertexAttributesRaw,
-                      val indexBuffer: ShortArray) {
-    data class Recipe(val vertexAttributesRecipe: AbcVertexAttributesRaw.Recipe)
+class AbcMeshRaw(val vertexAttributes: AbcVertexAttributesRaw,
+                 val indexBuffer: ShortArray) {
+    class Recipe(val vertexAttributesRecipe: AbcVertexAttributesRaw.Recipe)
 
     constructor(verticesCount: Int, indicesCount: Int)
             : this(AbcVertexAttributesRaw(verticesCount), ShortArray(indicesCount))
@@ -46,10 +46,10 @@ data class AbcMeshRaw(val vertexAttributes: AbcVertexAttributesRaw,
     }
 }
 
-data class AbcVertexAttributesRaw(val positionsBuffer: Vector4Array,
-                                  val normalsBuffer: Vector4Array) {
-    data class Recipe(val positionsComponents: Vector4Components,
-                      val normalsComponents: Vector4Components)
+class AbcVertexAttributesRaw(val positionsBuffer: Vector4Array,
+                             val normalsBuffer: Vector4Array) {
+    class Recipe(val positionsComponents: Vector4Components,
+                 val normalsComponents: Vector4Components)
 
     init {
         if (positionsBuffer.vectorsCount != normalsBuffer.vectorsCount) {
@@ -70,5 +70,16 @@ data class AbcVertexAttributesRaw(val positionsBuffer: Vector4Array,
                 recipe.positionsComponents,
                 normalsBuffer.toDirectFloatBuffer(recipe.normalsComponents),
                 recipe.normalsComponents)
+    }
+
+    fun copy(): AbcVertexAttributesRaw {
+        val result = AbcVertexAttributesRaw(vertexCount())
+        positionsBuffer.rewind()
+        result.positionsBuffer.rewind()
+        result.positionsBuffer.putAll(positionsBuffer)
+        normalsBuffer.rewind()
+        result.normalsBuffer.rewind()
+        result.normalsBuffer.putAll(normalsBuffer)
+        return result
     }
 }
