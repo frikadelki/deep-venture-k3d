@@ -26,8 +26,9 @@ class AbcMorphingSphereFactory {
         val sphereBakedMeshAttributes = sphereMeshAttributes.bake(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE))
 
         val morphingMesh = AbcMorphingMesh(flatBakedMesh.vertexAttributes, flatBakedMesh.indexBuffer)
-        morphingMesh.addFrame(sphereBakedMeshAttributes, 5000)
-        morphingMesh.addFrame(sphereBakedMeshAttributes, 2000)
+        morphingMesh.addFrame(sphereBakedMeshAttributes, 6000)
+        morphingMesh.addFrame(sphereBakedMeshAttributes, 3000)
+        morphingMesh.addFrame(flatBakedMesh.vertexAttributes, 3000)
         morphingMesh.addFrame(flatBakedMesh.vertexAttributes, 3000)
 
         return morphingMesh

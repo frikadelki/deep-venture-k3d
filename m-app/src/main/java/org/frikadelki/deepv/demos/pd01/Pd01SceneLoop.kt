@@ -7,6 +7,7 @@
 package org.frikadelki.deepv.demos.pd01
 
 import android.opengl.GLES20
+import org.frikadelki.deepv.common.EmptyLump
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
@@ -46,23 +47,33 @@ class Pd01SceneLoop : SceneLoop {
 
 private class Pd01Scene(val pipeline: Pipeline) {
     // shared resources
-    private val abcMeshMorphingProgram = AbcMorphingMeshProgram(pipeline)
+    private val abcMorphingMeshProgram = AbcMorphingMeshProgram(pipeline)
 
     // scene pawns
 
     private val morphSphere = Pawn()
+    private val morphSphereRotationSpeed = 0.05f
     init {
-        val sphereFactory = AbcMorphingSphereFactory()
-        val morphingMesh = sphereFactory.generateMorphingMesh(6)
+        morphSphere.transform
+                .selfRotate(v4AxisZ(), 22.5f)
+                .worldTranslate(v4Vector(x = -0.0f, y = 0.0f))
+
+        val meshFactory = AbcMorphingSphereFactory()
+        val morphingMesh = meshFactory.generateMorphingMesh(5)
         morphSphere.addLump(AbcMorphingMeshLump(
-                abcMeshMorphingProgram,
+                abcMorphingMeshProgram,
                 morphingMesh,
                 v4Color(0.8f, 0.2f, 0.4f),
                 v4Color(0.5f, 0.5f, 0.5f, 20.0f)))
 
-        morphSphere.transform
-                .selfRotate(v4AxisZ(), 22.5f)
-                .worldTranslate(v4Vector(x = -0.3f))
+        morphSphere.addLump(object: EmptyLump() {
+            override fun onUpdateAnimations(deltaMillis: Long) {
+                val rotationAngle = deltaMillis * morphSphereRotationSpeed
+                morphSphere.transform.selfRotate(
+                        v4Vector(1.0f, 1.0f, 1.0f).normalize(),
+                        rotationAngle)
+            }
+        })
     }
 
     // scene
@@ -108,6 +119,6 @@ private class Pd01Scene(val pipeline: Pipeline) {
     }
 
     fun onDispose() {
-        abcMeshMorphingProgram.dispose()
+        abcMorphingMeshProgram.dispose()
     }
 }
