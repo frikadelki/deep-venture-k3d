@@ -8,6 +8,7 @@ package org.frikadelki.deepv.common
 
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
+import org.frikadelki.deepv.pipeline.math.Vector4RO
 import org.frikadelki.kash.klang.dirtyProperty
 
 class Transform {
@@ -31,13 +32,13 @@ class Transform {
         return this
     }
 
-    fun selfRotate(axis: Vector4, angleDegrees: Float): Transform {
+    fun selfRotate(axis: Vector4RO, angleDegrees: Float): Transform {
         selfRotationMatrix.rotate(axis, angleDegrees)
         modelMatrixProperty.markDirty()
         return this
     }
 
-    fun worldTranslate(d: Vector4): Transform {
+    fun worldTranslate(d: Vector4RO): Transform {
         worldPositionMatrix.translate(d)
         modelMatrixProperty.markDirty()
         return this

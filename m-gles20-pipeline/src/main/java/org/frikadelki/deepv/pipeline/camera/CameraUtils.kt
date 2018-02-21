@@ -7,7 +7,7 @@
 package org.frikadelki.deepv.pipeline.camera
 
 import org.frikadelki.deepv.pipeline.math.Matrix4
-import org.frikadelki.deepv.pipeline.math.Vector4
+import org.frikadelki.deepv.pipeline.math.Vector4RO
 import android.opengl.Matrix as MatrixUtils
 
 fun Matrix4.setFrustum(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float): Matrix4 {
@@ -29,7 +29,7 @@ fun Matrix4.setOrtho(left: Float, right: Float, bottom: Float, top: Float, near:
     return this
 }
 
-fun Matrix4.setLookAt(eye: Vector4, center: Vector4, up: Vector4): Matrix4 {
+fun Matrix4.setLookAt(eye: Vector4RO, center: Vector4RO, up: Vector4RO): Matrix4 {
     MatrixUtils.setLookAtM(rawData, rawOffset,
             eye.x, eye.y, eye.z,
             center.x, center.y, center.z,

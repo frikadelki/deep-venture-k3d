@@ -6,7 +6,9 @@
 
 package org.frikadelki.deepv.common.mesh
 
-import org.frikadelki.deepv.pipeline.math.*
+import org.frikadelki.deepv.pipeline.math.Matrix4
+import org.frikadelki.deepv.pipeline.math.Vector4Array
+import org.frikadelki.deepv.pipeline.math.World
 
 fun abcCubeMeshRaw(): AbcMeshRaw {
     val sideSize: Float = World.C1
@@ -71,29 +73,29 @@ fun abcCubeMeshRaw(): AbcMeshRaw {
     // bottom
     addSidePlane { matrix -> matrix
             .translate(dy = sideSize)
-            .rotate(v4AxisX(), World.ARC_180)
+            .rotate(World.axisX, World.ARC_180)
     }
 
     // left
     addSidePlane { matrix -> matrix
-            .rotate(v4AxisX(), World.ARC_090)
+            .rotate(World.axisX, World.ARC_090)
     }
 
     // right
     addSidePlane { matrix -> matrix
             .translate(dy = sideSize, dz = sideSize)
-            .rotate(v4AxisX(), World.ARC_270)
+            .rotate(World.axisX, World.ARC_270)
     }
 
     // front
     addSidePlane { matrix -> matrix
             .translate(dx = sideSize, dz = sideSize)
-            .rotate(v4AxisY(), World.ARC_090)
+            .rotate(World.axisY, World.ARC_090)
     }
 
     // back
     addSidePlane { matrix -> matrix
-            .rotate(v4AxisY(), World.ARC_270)
+            .rotate(World.axisY, World.ARC_270)
     }
 
     // center on origin

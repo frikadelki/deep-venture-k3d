@@ -10,6 +10,7 @@ import org.frikadelki.deepv.pipeline.camera.setLookAt
 import org.frikadelki.deepv.pipeline.camera.setPerspective
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
+import org.frikadelki.deepv.pipeline.math.Vector4RO
 import org.frikadelki.kash.klang.dirtyProperty
 
 class Camera {
@@ -31,9 +32,9 @@ class Camera {
 
     val viewProjectionMatrix by viewProjectionMProperty
 
-    fun setLookAt(eyePosition: Vector4,
-                  lookAtCenter: Vector4,
-                  cameraUp: Vector4) {
+    fun setLookAt(eyePosition: Vector4RO,
+                  lookAtCenter: Vector4RO,
+                  cameraUp: Vector4RO) {
         this.eyePosition.set(eyePosition)
         viewM.setLookAt(eyePosition, lookAtCenter, cameraUp)
         viewProjectionMProperty.markDirty()

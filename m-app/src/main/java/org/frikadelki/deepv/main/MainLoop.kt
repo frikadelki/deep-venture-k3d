@@ -46,7 +46,6 @@ class MainLoop(private val sceneLoop: SceneLoop) : GLSurfaceView.Renderer {
 
         if (animateMillis > 0) {
             sceneLoop.onUpdateAnimations(animateMillis)
-
         }
         sceneLoop.onDrawFrame()
     }

@@ -55,10 +55,6 @@ class AbcMorphingMesh(zeroFrameAttributes: AbcVertexAttributesBaked,
         }
         return Step(previous, next)
     }
-
-    fun last(): Frame {
-        return frames.last()
-    }
 }
 
 class AbcMorphingMeshInterpolator(private val mesh: AbcMorphingMesh) {

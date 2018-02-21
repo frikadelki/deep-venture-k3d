@@ -55,13 +55,13 @@ class AbcMorphingSphereFactory {
             positionsBuffer.replaceVector {
                 normalForPoint(it, tmpNormal)
                 normalsBuffer.putVector(tmpNormal)
-                it.set(tmpNormal.scale(radius).point())
+                it.set(tmpNormal.scale(radius).setPoint())
             }
         }
     }
 
     private fun normalForPoint(point: Vector4, out: Vector4 = Vector4()): Vector4 {
-        out.set(center).negate().add(point).normalize()
+        out.set(center).negate().add(point).vectorNormalize()
         return out
     }
 }
@@ -115,11 +115,11 @@ class AbcOctahedronMeshFactory {
 
             val abv = tmpVectorA.set(a).negate().add(b)
             val bcv = tmpVectorB.set(b).negate().add(c)
-            val normal = abv.cross(bcv).normalize()
+            val normal = abv.cross(bcv).vectorNormalize()
 
-            outPositions[3].set(abv).scale(0.5f).add(a).point()
-            outPositions[4].set(bcv).scale(0.5f).add(b).point()
-            outPositions[5].set(c).negate().add(a).scale(0.5f).add(c).point()
+            outPositions[3].set(abv).scale(0.5f).add(a).setPoint()
+            outPositions[4].set(bcv).scale(0.5f).add(b).setPoint()
+            outPositions[5].set(c).negate().add(a).scale(0.5f).add(c).setPoint()
 
             for(i in 0 until pointsPerTessellatedTriangle) {
                 outNormals.putVector(normal)
@@ -196,7 +196,7 @@ class AbcOctahedronMeshFactory {
 
                 val abv = tmpVectorA.set(pA).negate().add(pB)
                 val bcv = tmpVectorB.set(pB).negate().add(pC)
-                val normal = abv.cross(bcv).normalize()
+                val normal = abv.cross(bcv).vectorNormalize()
                 for(j in 0 until pointPerTriangle) {
                     normals.putVector(normal)
                 }

@@ -17,9 +17,11 @@ internal const val V4_W = 3
 
 private const val C0 = World.C0
 private const val C1 = World.C1
+private const val V4_VECTOR_W = C0
 private const val V4_POINT_W = C1
 
 enum class Vector4Components(val count: Int) {
+    ZERO(0),
     ONE(1),
     TWO(2),
     THREE(3),
@@ -31,8 +33,16 @@ enum class Vector4Components(val count: Int) {
     }
 }
 
+interface Vector4RO {
+    val x: Float
+    val y: Float
+    val z: Float
+    val w: Float
+}
+
 class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
-              private var offset: Int = 0) {
+              private var offset: Int = 0)
+    : Vector4RO {
     init {
         if (offset < 0 || offset + VECTOR4_SIZE > data.size) {
             throw IllegalArgumentException("Bad offset and/or data array size.")
@@ -42,8 +52,14 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
     constructor(x: Float = C0, y: Float = C0, z: Float = C0, w: Float = C0)
             : this(floatArrayOf(x, y, z, w), 0)
 
-    fun length(): Float {
-        return Math.sqrt((x*x + y*y + z*z + w*w).toDouble()).toFloat()
+    fun setPoint(x: Float = this.x, y: Float = this.y, z: Float = this.z): Vector4 {
+        set(x, y, z, V4_POINT_W)
+        return this
+    }
+
+    fun setVector(x: Float = this.x, y: Float = this.y, z: Float = this.z): Vector4 {
+        set(x, y, z, V4_VECTOR_W)
+        return this
     }
 
     fun set(x: Float = this.x, y: Float = this.y, z: Float = this.z, w: Float = this.w) : Vector4 {
@@ -54,13 +70,17 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
         return this
     }
 
-    fun set(vector: Vector4): Vector4 {
-        System.arraycopy(vector.data, vector.offset, data, offset, VECTOR4_SIZE)
-        return this
+    fun set(vector: Vector4RO): Vector4 {
+        if (vector is Vector4) {
+            return set(vector)
+        } else {
+            set(vector.x, vector.y, vector.z, vector.w)
+            return this
+        }
     }
 
-    fun point(x: Float = this.x, y: Float = this.y, z: Float = this.z) : Vector4 {
-        set(x, y, z, V4_POINT_W)
+    fun set(vector: Vector4): Vector4 {
+        System.arraycopy(vector.data, vector.offset, data, offset, VECTOR4_SIZE)
         return this
     }
 
@@ -79,16 +99,6 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
         return this
     }
 
-    fun cross(v2: Vector4, out: Vector4 = Vector4()): Vector4 {
-        val v1 = this
-        out.set(
-                v1.y * v2.z - v1.z * v2.y,
-                v1.z * v2.x - v1.x * v2.z,
-                v1.x * v2.y - v1.y * v2.x,
-                0.0f)
-        return out
-    }
-
     fun scale(scalar: Float): Vector4 {
         set(x*scalar, y*scalar, z*scalar, w*scalar)
         return this
@@ -99,33 +109,51 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
         return this
     }
 
+    fun cross(v2: Vector4, out: Vector4 = Vector4()): Vector4 {
+        val v1 = this
+        out.set(
+                v1.y * v2.z - v1.z * v2.y,
+                v1.z * v2.x - v1.x * v2.z,
+                v1.x * v2.y - v1.y * v2.x,
+                0.0f)
+        return out
+    }
+
     fun pointWDivide(): Vector4 {
-        if (isEpsilonZero(w)) {
-            return this
+        if (w.isEpsilonZero()) {
+            throw IllegalStateException("Not a point.")
+            // return this
         }
         set(x/w, y/w, z/w, V4_POINT_W)
         return this
     }
 
-    fun normalize(): Vector4 {
+    fun vectorNormalize(): Vector4 {
+        if (!w.isEpsilonZero()) {
+            throw IllegalStateException("Not a vector.")
+        }
         val length = length()
-        set(x/length, y/length, z/length, w/length)
+        setVector(x/length, y/length, z/length)
         return this
     }
 
-    var x: Float
+    fun length(): Float {
+        return Math.sqrt((x*x + y*y + z*z + w*w).toDouble()).toFloat()
+    }
+
+    override var x: Float
         get() = data[offset + V4_X]
         set(value) { data[offset + V4_X] = value }
 
-    var y: Float
+    override var y: Float
         get() = data[offset + V4_Y]
         set(value) { data[offset + V4_Y] = value }
 
-    var z: Float
+    override var z: Float
         get() = data[offset + V4_Z]
         set(value) { data[offset + V4_Z] = value }
 
-    var w: Float
+    override var w: Float
         get() = data[offset + V4_W]
         set(value) { data[offset + V4_W] = value }
 
@@ -308,7 +336,7 @@ class Vector4Array internal constructor(private val data: FloatArray,
     fun normalizeAll() {
         rewind()
         for(i in 0 until vectorsCount) {
-            access.normalize()
+            access.vectorNormalize()
             advancePosition()
         }
     }

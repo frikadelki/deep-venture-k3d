@@ -40,7 +40,7 @@ class Matrix4(private val data: FloatArray = FloatArray(MATRIX4_SIZE), private v
         return this
     }
 
-    fun translate(d: Vector4): Matrix4 {
+    fun translate(d: Vector4RO): Matrix4 {
         MatrixUtils.translateM(data, offset, d.x, d.y, d.z)
         return this
     }
@@ -50,7 +50,7 @@ class Matrix4(private val data: FloatArray = FloatArray(MATRIX4_SIZE), private v
         return this
     }
 
-    fun rotate(axis: Vector4, angleDegrees: Float): Matrix4 {
+    fun rotate(axis: Vector4RO, angleDegrees: Float): Matrix4 {
         MatrixUtils.rotateM(data, offset, angleDegrees, axis.x, axis.y, axis.z)
         return this
     }

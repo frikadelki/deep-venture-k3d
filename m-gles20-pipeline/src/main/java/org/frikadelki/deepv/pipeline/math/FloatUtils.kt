@@ -8,14 +8,14 @@ package org.frikadelki.deepv.pipeline.math
 
 const val FUC_EPSILON: Float = 1.1920929E-7f
 
-fun isEpsilonZero(value: Float): Boolean {
-    return -FUC_EPSILON < value && value < FUC_EPSILON
+fun Float.isEpsilonZero(): Boolean {
+    return -FUC_EPSILON < this && this < FUC_EPSILON
 }
 
-fun isEpsilonEqual(a: Float, b: Float): Boolean {
-    return isEpsilonZero(a - b)
+fun Float.isEpsilonEqual(b: Float): Boolean {
+    return (this - b).isEpsilonZero()
 }
 
-fun Vector4.isEpsilonZero(): Boolean {
-    return isEpsilonZero(length())
+fun Vector4.isEpsilonZeroLength(): Boolean {
+    return length().isEpsilonZero()
 }

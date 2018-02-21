@@ -14,7 +14,7 @@ import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 
 class AbcMeshBaked(val vertexAttributes: AbcVertexAttributesBaked,
-                        val indexBuffer: ShortBuffer)
+                   val indexBuffer: ShortBuffer)
 
 class AbcVertexAttributesBaked(private val positionsBuffer: FloatBuffer,
                                private val positionsComponents: Vector4Components,
