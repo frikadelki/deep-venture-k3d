@@ -8,7 +8,9 @@ package org.frikadelki.deepv.demos.pd01
 
 import org.frikadelki.deepv.common.*
 import org.frikadelki.deepv.common.mesh.AbcVertexAttributesBaked
+import org.frikadelki.deepv.pipeline.CullMode
 import org.frikadelki.deepv.pipeline.Pipeline
+import org.frikadelki.deepv.pipeline.TriangleWinding
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
 import org.frikadelki.deepv.pipeline.program.Program
@@ -217,6 +219,9 @@ class AbcMorphingMeshProgram(val pipeline: Pipeline) {
     }
 
     fun drawTriangles(indexBuffer: ShortBuffer) {
+        pipeline.setCullingEnabled(true)
+        pipeline.setCullFace(CullMode.BACK)
+        pipeline.setFrontFace(TriangleWinding.COUNTERCLOCKWISE)
         program.drawTriangles(indexBuffer)
     }
 

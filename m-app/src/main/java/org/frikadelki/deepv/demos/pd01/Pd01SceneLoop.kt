@@ -108,7 +108,9 @@ private class Pd01Scene(val pipeline: Pipeline) {
     fun onDrawFrame() {
         pipeline.setClearColor(0.2f, 0.5f, 0.5f, 1.0f)
         pipeline.clearColorBuffer()
-        pipeline.setCullingEnabled(true)
+
+        pipeline.enableDepthTest(GLES20.GL_LEQUAL, 1.0f)
+        pipeline.clearDepthBuffer()
 
         scene.onDraw()
     }

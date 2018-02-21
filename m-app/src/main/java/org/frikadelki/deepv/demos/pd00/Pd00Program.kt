@@ -10,7 +10,9 @@ import org.frikadelki.deepv.common.Camera
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.LightsSnippet
 import org.frikadelki.deepv.common.mesh.AbcVertexAttributesBaked
+import org.frikadelki.deepv.pipeline.CullMode
 import org.frikadelki.deepv.pipeline.Pipeline
+import org.frikadelki.deepv.pipeline.TriangleWinding
 import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
 import org.frikadelki.deepv.pipeline.program.Program
@@ -19,7 +21,7 @@ import org.frikadelki.deepv.pipeline.program.UniformHandle
 import org.frikadelki.deepv.pipeline.program.VertexAttributeHandle
 import java.nio.ShortBuffer
 
-class Pd00Program(pipeline: Pipeline) {
+class Pd00Program(val pipeline: Pipeline) {
     private val lightsSnippet = LightsSnippet(2)
 
     private val programSource = ProgramSource(
@@ -107,6 +109,9 @@ class Pd00Program(pipeline: Pipeline) {
     }
 
     fun drawTriangles(indexBuffer: ShortBuffer) {
+        pipeline.setCullingEnabled(true)
+        pipeline.setCullFace(CullMode.BACK)
+        pipeline.setFrontFace(TriangleWinding.COUNTERCLOCKWISE)
         program.drawTriangles(indexBuffer)
     }
 

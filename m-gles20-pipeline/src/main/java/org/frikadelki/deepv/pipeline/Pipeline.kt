@@ -11,6 +11,17 @@ import org.frikadelki.deepv.pipeline.program.Program
 import org.frikadelki.deepv.pipeline.program.ProgramException
 import org.frikadelki.deepv.pipeline.program.ProgramSource
 
+enum class TriangleWinding(val winding: Int) {
+    COUNTERCLOCKWISE(GLES20.GL_CCW),
+    CLOCKWISE(GLES20.GL_CW)
+}
+
+enum class CullMode(val mode: Int) {
+    FRONT(GLES20.GL_FRONT),
+    BACK(GLES20.GL_BACK),
+    FRONT_AND_BACK(GLES20.GL_FRONT_AND_BACK),
+    ;
+}
 
 class Pipeline {
     fun loadProgram(source: ProgramSource): Program {
@@ -26,6 +37,10 @@ class Pipeline {
         GLES20.glClearColor(r, g, b, a)
     }
 
+    fun clearColorBuffer() {
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+    }
+
     fun setCullingEnabled(enabled: Boolean) {
         if (enabled) {
             GLES20.glEnable(GLES20.GL_CULL_FACE)
@@ -34,8 +49,23 @@ class Pipeline {
         }
     }
 
-    fun clearColorBuffer() {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+    fun setCullFace(mode: CullMode) {
+        GLES20.glCullFace(mode.mode)
+    }
+
+    fun setFrontFace(winding: TriangleWinding) {
+        GLES20.glFrontFace(winding.winding)
+    }
+
+    fun enableDepthTest(glDepthFunction: Int, clearDepth: Float) {
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST)
+        GLES20.glDepthFunc(glDepthFunction)
+        GLES20.glDepthMask(true)
+        GLES20.glClearDepthf(clearDepth)
+    }
+
+    fun clearDepthBuffer() {
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT)
     }
 }
 
