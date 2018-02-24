@@ -26,6 +26,9 @@ class Transform {
 
     val modelMatrix by modelMatrixProperty
 
+    val normalsMatrix: Matrix4
+        get() = selfRotationMatrix
+
     fun selfScale(scale: Vector4): Transform {
         selfScaleMatrix.scale(scale)
         modelMatrixProperty.markDirty()

@@ -49,7 +49,7 @@ class AbcSkeletalMeshLump(private val program: AbcSkeletalMeshProgram,
         program.setCamera(scene.camera)
         program.setLights(scene.lights)
 
-        program.setModelMatrix(pawn.transform.modelMatrix)
+        program.setModelTransform(pawn.transform)
         program.setModelColor(colorDiffuse, colorSpecular)
 
         program.setSkeletalMesh(mesh)
@@ -72,6 +72,7 @@ class AbcSkeletalMeshProgram(val pipeline: Pipeline) {
                 uniform mat4 viewProjectionMatrix;
 
                 uniform mat4 modelMatrix;
+                uniform mat4 normalsMatrix;
                 uniform bool invertNormal;
 
                 attribute vec3 vPosition;
@@ -83,7 +84,7 @@ class AbcSkeletalMeshProgram(val pipeline: Pipeline) {
                 void main() {
                     vec4 worldPosition = modelMatrix * vec4(vPosition, 1.0);
                     varPosition = vec3(worldPosition) / worldPosition.w;
-                    varNormal = normalize(modelMatrix * vec4(vNormal, 0.0)).xyz;
+                    varNormal = normalize(normalsMatrix * vec4(vNormal, 0.0)).xyz;
                     if (invertNormal) {
                         varNormal = -1.0 * varNormal;
                     }
@@ -119,6 +120,7 @@ class AbcSkeletalMeshProgram(val pipeline: Pipeline) {
     private val lightsBinding = lightsSnippet.makeBinding(program)
 
     private val modelMatrix: UniformHandle = program.uniform("modelMatrix")
+    private val normalsMatrix: UniformHandle = program.uniform("normalsMatrix")
     private val invertNormal: UniformHandle = program.uniform("invertNormal")
 
     private val modelColorDiffuse: UniformHandle = program.uniform("modelColorDiffuse")
@@ -140,8 +142,9 @@ class AbcSkeletalMeshProgram(val pipeline: Pipeline) {
         lightsBinding.setLights(lights)
     }
 
-    fun setModelMatrix(matrix: Matrix4) {
-        modelMatrix.setMatrix(matrix)
+    fun setModelTransform(transform: Transform) {
+        modelMatrix.setMatrix(transform.modelMatrix)
+        normalsMatrix.setMatrix(transform.normalsMatrix)
     }
 
     fun setModelColor(colorDiffuse: Vector4, colorSpecular: Vector4) {

@@ -9,11 +9,11 @@ package org.frikadelki.deepv.demos.pd00
 import org.frikadelki.deepv.common.Camera
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.LightsSnippet
+import org.frikadelki.deepv.common.Transform
 import org.frikadelki.deepv.common.mesh.AbcVertexAttributesBaked
 import org.frikadelki.deepv.pipeline.CullMode
 import org.frikadelki.deepv.pipeline.Pipeline
 import org.frikadelki.deepv.pipeline.TriangleWinding
-import org.frikadelki.deepv.pipeline.math.Matrix4
 import org.frikadelki.deepv.pipeline.math.Vector4
 import org.frikadelki.deepv.pipeline.program.Program
 import org.frikadelki.deepv.pipeline.program.ProgramSource
@@ -31,6 +31,7 @@ class Pd00Program(val pipeline: Pipeline) {
                 uniform mat4 viewProjectionMatrix;
 
                 uniform mat4 modelMatrix;
+                uniform mat4 normalsMatrix;
 
                 attribute vec3 vPosition;
                 attribute vec3 vNormal;
@@ -41,7 +42,7 @@ class Pd00Program(val pipeline: Pipeline) {
                 void main() {
                     vec4 worldPosition = modelMatrix * vec4(vPosition, 1.0);
                     varPosition = vec3(worldPosition) / worldPosition.w;
-                    varNormal = normalize(modelMatrix * vec4(vNormal, 0.0)).xyz;
+                    varNormal = normalize(normalsMatrix * vec4(vNormal, 0.0)).xyz;
                     gl_Position = viewProjectionMatrix * worldPosition;
                 }
 
@@ -74,6 +75,7 @@ class Pd00Program(val pipeline: Pipeline) {
     private val lightsBinding = lightsSnippet.makeBinding(program)
 
     private val modelMatrix: UniformHandle = program.uniform("modelMatrix")
+    private val normalsMatrix: UniformHandle = program.uniform("normalsMatrix")
     private val modelColorDiffuse: UniformHandle = program.uniform("modelColorDiffuse")
     private val modelColorSpecular: UniformHandle = program.uniform("modelColorSpecular")
 
@@ -93,8 +95,9 @@ class Pd00Program(val pipeline: Pipeline) {
         lightsBinding.setLights(lights)
     }
 
-    fun setModelMatrix(matrix: Matrix4) {
-        modelMatrix.setMatrix(matrix)
+    fun setModelTransform(transform: Transform) {
+        modelMatrix.setMatrix(transform.modelMatrix)
+        normalsMatrix.setMatrix(transform.normalsMatrix)
     }
 
     fun setModelColor(colorDiffuse: Vector4, colorSpecular: Vector4) {

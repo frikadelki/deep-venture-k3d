@@ -22,7 +22,7 @@ class Pd00AbcMeshPainterLump(private val program: Pd00Program,
         program.setCamera(scene.camera)
         program.setLights(scene.lights)
 
-        program.setModelMatrix(pawn.transform.modelMatrix)
+        program.setModelTransform(pawn.transform)
         program.setModelColor(colorDiffuse, colorSpecular)
 
         program.setVertexAttributes(mesh.vertexAttributes)
