@@ -4,7 +4,7 @@
  * Created by frikadelki on 2018/2/12
  */
 
-package pipeline
+package org.frikadelki.deepv.pipeline
 
 import org.frikadelki.deepv.pipeline.math.VECTOR4_SIZE
 import org.frikadelki.deepv.pipeline.math.Vector4

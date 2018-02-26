@@ -22,7 +22,7 @@ class DirtyProperty<out TValue : Any> internal constructor(private val valueBuil
 
     override fun getValue(thisRef: Any, property: KProperty<*>): TValue {
         if (dirty) {
-            dirty = true
+            dirty = false
             lastValue = valueBuilder()
         }
         return lastValue
