@@ -6,13 +6,14 @@
 
 package org.frikadelki.deepv.common.mesh
 
+import org.frikadelki.deepv.pipeline.INDICES_PER_TRIANGLE
 import org.frikadelki.deepv.pipeline.math.*
 
 private const val POLAR_SEGMENTS_COUNT_MIN = 3
 private const val Z_SEGMENTS_COUNT_MIN = 1
 
-class AbcCylinderMesh(private val circleSegmentsCount: Int,
-                      private val zSegmentsCount: Int) {
+class AbcCylinder(private val circleSegmentsCount: Int,
+                  private val zSegmentsCount: Int) {
     init {
         if (circleSegmentsCount < POLAR_SEGMENTS_COUNT_MIN || zSegmentsCount < Z_SEGMENTS_COUNT_MIN) {
             throw IllegalArgumentException()
@@ -24,14 +25,13 @@ class AbcCylinderMesh(private val circleSegmentsCount: Int,
     private val trianglesCount = trianglesPerZSegmentCount * zSegmentsCount
     private val zSegmentIncrement = World.C1 / zSegmentsCount.toFloat()
 
-    private val attributes = AbcVertexAttributesRaw(verticesCount)
-    private val indices = ShortArray(trianglesCount * 3)
+    val mesh = AbcMeshRaw(verticesCount, trianglesCount * INDICES_PER_TRIANGLE)
 
     init {
         var circlesSlicingOffset = 0
 
-        var previousZSegmentPositions = attributes.positionsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
-        var previousZSegmentNormals = attributes.normalsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
+        var previousZSegmentPositions = mesh.vertexAttributes.positionsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
+        var previousZSegmentNormals = mesh.vertexAttributes.normalsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
         var nextZSegmentPositions = previousZSegmentPositions
         var nextZSegmentNormals = previousZSegmentNormals
 
@@ -40,20 +40,20 @@ class AbcCylinderMesh(private val circleSegmentsCount: Int,
             circlesSlicingOffset += circleSegmentsCount
 
             previousZSegmentPositions = nextZSegmentPositions
-            nextZSegmentPositions = attributes.positionsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
+            nextZSegmentPositions = mesh.vertexAttributes.positionsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
             previousZSegmentPositions.rewind()
-            previousZSegmentPositions.forEachRemaining {
-                nextZSegmentPositions.putVector(it.x, it.y, it.z + zSegmentIncrement, it.w)
+            previousZSegmentPositions.writeRemainingTo(nextZSegmentPositions) {
+                it.z += zSegmentIncrement
             }
 
             previousZSegmentNormals = nextZSegmentNormals
-            nextZSegmentNormals = attributes.normalsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
+            nextZSegmentNormals = mesh.vertexAttributes.normalsBuffer.slice(circlesSlicingOffset, circleSegmentsCount)
             previousZSegmentNormals.rewind()
-            nextZSegmentNormals.putAll(previousZSegmentNormals)
+            previousZSegmentNormals.writeRemainingTo(nextZSegmentNormals)
         }
 
         val translateMeshDZ = -World.C1 / 2.0f
-        attributes.positionsBuffer.forEachRemaining {
+        mesh.vertexAttributes.positionsBuffer.forEachRemaining {
             it.translate(dz = translateMeshDZ)
         }
 
@@ -66,13 +66,13 @@ class AbcCylinderMesh(private val circleSegmentsCount: Int,
             nextZSegmentOffset += circleSegmentsCount
 
             for(i in 0 until circleSegmentsCount) {
-                indices[indicesOffset++] = (nextZSegmentOffset + i).toShort()
-                indices[indicesOffset++] = (previousZSegmentOffset + i).toShort()
-                indices[indicesOffset++] = (nextZSegmentOffset + (i + 1) % circleSegmentsCount).toShort()
+                mesh.indexBuffer[indicesOffset++] = (nextZSegmentOffset + i).toShort()
+                mesh.indexBuffer[indicesOffset++] = (previousZSegmentOffset + i).toShort()
+                mesh.indexBuffer[indicesOffset++] = (nextZSegmentOffset + (i + 1) % circleSegmentsCount).toShort()
 
-                indices[indicesOffset++] = (nextZSegmentOffset + (i + 1) % circleSegmentsCount).toShort()
-                indices[indicesOffset++] = (previousZSegmentOffset + i).toShort()
-                indices[indicesOffset++] = (previousZSegmentOffset + (i + 1) % circleSegmentsCount).toShort()
+                mesh.indexBuffer[indicesOffset++] = (nextZSegmentOffset + (i + 1) % circleSegmentsCount).toShort()
+                mesh.indexBuffer[indicesOffset++] = (previousZSegmentOffset + i).toShort()
+                mesh.indexBuffer[indicesOffset++] = (previousZSegmentOffset + (i + 1) % circleSegmentsCount).toShort()
             }
         }
     }
@@ -95,10 +95,5 @@ class AbcCylinderMesh(private val circleSegmentsCount: Int,
             stepMatrix.multiply(position, tmpPosition).pointWDivide()
             position.set(tmpPosition)
         }
-    }
-
-    fun bakeMesh(recipe: AbcMeshRaw.Recipe): AbcMeshBaked {
-        val rawMesh = AbcMeshRaw(attributes, indices)
-        return rawMesh.bake(recipe)
     }
 }

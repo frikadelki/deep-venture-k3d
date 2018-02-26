@@ -36,7 +36,7 @@ class AbcMeshRaw(val vertexAttributes: AbcVertexAttributesRaw,
             : this(AbcVertexAttributesRaw(verticesCount), ShortArray(indicesCount))
 
     fun vertexCount(): Int {
-        return vertexAttributes.vertexCount()
+        return vertexAttributes.verticesCount()
     }
 
     fun bake(recipe: Recipe): AbcMeshBaked {
@@ -60,7 +60,7 @@ class AbcVertexAttributesRaw(val positionsBuffer: Vector4Array,
     constructor(verticesCount: Int)
             : this(Vector4Array(verticesCount), Vector4Array(verticesCount))
 
-    fun vertexCount(): Int {
+    fun verticesCount(): Int {
         return positionsBuffer.vectorsCount
     }
 
@@ -73,13 +73,6 @@ class AbcVertexAttributesRaw(val positionsBuffer: Vector4Array,
     }
 
     fun copy(): AbcVertexAttributesRaw {
-        val result = AbcVertexAttributesRaw(vertexCount())
-        positionsBuffer.rewind()
-        result.positionsBuffer.rewind()
-        result.positionsBuffer.putAll(positionsBuffer)
-        normalsBuffer.rewind()
-        result.normalsBuffer.rewind()
-        result.normalsBuffer.putAll(normalsBuffer)
-        return result
+        return AbcVertexAttributesRaw(positionsBuffer.copy(), normalsBuffer.copy())
     }
 }

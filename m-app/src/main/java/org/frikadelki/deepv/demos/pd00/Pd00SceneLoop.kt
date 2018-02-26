@@ -11,10 +11,7 @@ import org.frikadelki.deepv.common.EmptyLump
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
-import org.frikadelki.deepv.common.mesh.AbcMeshBaked
-import org.frikadelki.deepv.common.mesh.AbcMeshRaw
-import org.frikadelki.deepv.common.mesh.AbcVertexAttributesRaw
-import org.frikadelki.deepv.common.mesh.abcCubeMeshRaw
+import org.frikadelki.deepv.common.mesh.*
 import org.frikadelki.deepv.main.SceneLoop
 import org.frikadelki.deepv.pipeline.Pipeline
 import org.frikadelki.deepv.pipeline.math.*
@@ -52,7 +49,8 @@ private class Pd00Scene(val pipeline: Pipeline) {
 
     private val meshPainterProgram = Pd00Program(pipeline)
 
-    private val cubeMesh = abcCubeBakedMesh()
+    private val cubeMesh = Pd00Resources.cubedMesh()
+    private val sphereMesh = Pd00Resources.sphereMesh()
 
     // scene
 
@@ -72,10 +70,10 @@ private class Pd00Scene(val pipeline: Pipeline) {
 
     private val sceneAmbientColor = v4Color(0.4f, 0.4f, 0.4f)
     private val sceneSun0 = Lights.Direct(
-            v4Vector(x = -1.0f, z = 1.0f),
+            v4Vector(x = -1.0f, z = 1.0f).vectorNormalize(),
             v4Color(0.3f, 0.3f, 0.3f))
     private val sceneBulb0 = Lights.Point(
-            v4Point(x = 2.0f, z = 2.0f),
+            v4Point(x = 2.0f, y = 5.0f, z = 2.0f),
             v4Color(0.5f, 0.5f, 0.5f))
 
     init {
@@ -87,6 +85,7 @@ private class Pd00Scene(val pipeline: Pipeline) {
     // scene pawns
 
     private val scubePawn = Pawn()
+
     init {
         val meshPainterLump = Pd00AbcMeshPainterLump(
                 meshPainterProgram,
@@ -105,12 +104,13 @@ private class Pd00Scene(val pipeline: Pipeline) {
 
         val scaleFactor = 1.1f
         scubePawn.transform
-                .selfScale(v4Point(scaleFactor, scaleFactor, scaleFactor))
-                .worldTranslate(v4Vector(y = 0.7f))
+                .selfScale(v4Vector(scaleFactor, scaleFactor, scaleFactor))
+                .worldTranslate(v4Vector(x = -0.5f, y = 0.7f))
         scene.addPawn(scubePawn)
     }
 
     private val bubePawn = Pawn()
+
     init {
         val meshPainterLump = Pd00AbcMeshPainterLump(
                 meshPainterProgram,
@@ -122,8 +122,33 @@ private class Pd00Scene(val pipeline: Pipeline) {
         bubePawn.transform
                 .selfRotate(World.axisZ, 22.5f)
                 .selfRotate(World.axisY, 22.5f)
-                .worldTranslate(v4Vector(y = -0.6f, z = -0.2f))
+                .worldTranslate(v4Vector(x = -0.5f, y = -0.6f, z = -0.2f))
         scene.addPawn(bubePawn)
+    }
+
+    private val tsubePawn = Pawn()
+
+    init {
+        val meshPainterLump = Pd00AbcMeshPainterLump(
+                meshPainterProgram,
+                sphereMesh,
+                v4Color(0.3f, 0.05f, 0.2f, 1.0f),
+                v4Color(1.0f, 1.0f, 0.0f, 20.5f))
+        tsubePawn.addLump(meshPainterLump)
+
+        val tsubeRotationSpeed = 0.03f
+        tsubePawn.addLump(object: EmptyLump() {
+            override fun onUpdateAnimations(deltaMillis: Long) {
+                val rotationAngle = deltaMillis * tsubeRotationSpeed
+                tsubePawn.transform.selfRotate(World.axisY, rotationAngle)
+            }
+        })
+
+        val scale = 0.7f
+        tsubePawn.transform
+                .selfScale(v4Vector(scale, scale, scale))
+                .worldTranslate(v4Vector(x = 0.4f, y = 0.0f, z = -0.9f))
+        scene.addPawn(tsubePawn)
     }
 
     // update & draw logic
@@ -152,8 +177,16 @@ private class Pd00Scene(val pipeline: Pipeline) {
     }
 }
 
-private fun abcCubeBakedMesh(): AbcMeshBaked {
-    val exportComponents = Vector4Components.THREE
-    val mesh = abcCubeMeshRaw()
-    return mesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(exportComponents, exportComponents)))
+private object Pd00Resources {
+    fun cubedMesh(): AbcMeshBaked {
+        val exportComponents = Vector4Components.THREE
+        val mesh = abcCubeMeshRaw()
+        return mesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(exportComponents, exportComponents)))
+    }
+
+    fun sphereMesh(): AbcMeshBaked {
+        val exportComponents = Vector4Components.THREE
+        val mesh = AbcSphere(5).mesh
+        return mesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(exportComponents, exportComponents)))
+    }
 }

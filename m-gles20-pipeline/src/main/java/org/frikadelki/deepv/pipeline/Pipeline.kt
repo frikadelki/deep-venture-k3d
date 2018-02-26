@@ -11,6 +11,9 @@ import org.frikadelki.deepv.pipeline.program.Program
 import org.frikadelki.deepv.pipeline.program.ProgramException
 import org.frikadelki.deepv.pipeline.program.ProgramSource
 
+const val POINTS_PER_TRIANGLE = 3
+const val INDICES_PER_TRIANGLE = 3
+
 enum class TriangleWinding(val winding: Int) {
     COUNTERCLOCKWISE(GLES20.GL_CCW),
     CLOCKWISE(GLES20.GL_CW)

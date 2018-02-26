@@ -11,9 +11,7 @@ import org.frikadelki.deepv.common.EmptyLump
 import org.frikadelki.deepv.common.Lights
 import org.frikadelki.deepv.common.Pawn
 import org.frikadelki.deepv.common.Scene
-import org.frikadelki.deepv.common.mesh.AbcCylinderMesh
-import org.frikadelki.deepv.common.mesh.AbcMeshRaw
-import org.frikadelki.deepv.common.mesh.AbcVertexAttributesRaw
+import org.frikadelki.deepv.common.mesh.*
 import org.frikadelki.deepv.main.SceneLoop
 import org.frikadelki.deepv.pipeline.Pipeline
 import org.frikadelki.deepv.pipeline.directFloatBuffer
@@ -70,7 +68,7 @@ private class Pd01Scene(val pipeline: Pipeline) {
     // lights setup
 
     private val sceneBulb0 = Lights.Point(
-            v4Point(x = 3.0f, y = 1.5f, z = 2.0f),
+            v4Point(x = 2.5f, y = 0.7f, z = 2.0f),
             v4Color(0.5f, 0.5f, 0.5f))
 
     init {
@@ -83,8 +81,7 @@ private class Pd01Scene(val pipeline: Pipeline) {
     private val morphSphere = Pawn()
 
     init {
-        val meshFactory = AbcMorphingSphereFactory()
-        val morphingMesh = meshFactory.generateMorphingMesh(5)
+        val morphingMesh = Pd01Resources.morphingSphereDemo(5)
         morphSphere.addLump(AbcMorphingMeshLump(
                 abcMorphingMeshProgram,
                 morphingMesh,
@@ -102,13 +99,14 @@ private class Pd01Scene(val pipeline: Pipeline) {
 
         morphSphere.transform
                 .selfRotate(World.axisZ, 22.5f)
-                .worldTranslate(v4Vector(x = -1.5f, y = 0.7f))
+                .worldTranslate(v4Vector(x = -0.4f, y = 0.6f, z = 0.5f))
         scene.addPawn(morphSphere)
     }
 
     private val skeletalCylinder = Pawn()
+
     init {
-        val skeletalMesh = generateSkeletalCylinder(32, 3)
+        val skeletalMesh = Pd01Resources.skeletalCylinder(32, 3)
         skeletalCylinder.addLump(AbcSkeletalMeshLump(
                 abcSkeletalMeshProgram,
                 skeletalMesh,
@@ -116,9 +114,12 @@ private class Pd01Scene(val pipeline: Pipeline) {
                 v4Color(0.8f, 0.8f, 0.4f),
                 v4Color(0.5f, 0.5f, 0.5f, 20.0f)))
 
+        val radius = 0.8f
+        val height = 1.3f
         skeletalCylinder.transform
                 .selfRotate(World.axisZ, 0.0f)
-                .worldTranslate(v4Vector(x = 0.5f, y = 0.0f))
+                .selfScale(v4Vector(radius, radius, height))
+                .worldTranslate(v4Vector(x = 0.68f, y = -0.3f, z = -0.25f))
         scene.addPawn(skeletalCylinder)
     }
 
@@ -149,11 +150,30 @@ private class Pd01Scene(val pipeline: Pipeline) {
     }
 }
 
-private fun generateSkeletalCylinder(circleSegmentsCount: Int, zSegmentsCount: Int) : AbcSkeletalMesh {
-    val cylinderMesh = AbcCylinderMesh(circleSegmentsCount, zSegmentsCount)
-            .bakeMesh(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE)))
-    val skeletalAttributes = AbcSkeletalVertexAttributes(
-            cylinderMesh.vertexAttributes,
-            directFloatBuffer(0), Vector4Components.ZERO)
-    return AbcSkeletalMesh(skeletalAttributes, listOf(), cylinderMesh.indexBuffer)
+private object Pd01Resources {
+    fun morphingSphereDemo(detailLevel: Int): AbcMorphingMesh {
+        val octahedron = AbcTessellatedOctahedron(detailLevel)
+        val sphereMeshAttributes = octahedron.mesh.vertexAttributes.copy()
+        AbcSphereMath.arrangeOnSphere(sphereMeshAttributes)
+
+        val flatBakedMesh = octahedron.mesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE)))
+        val sphereBakedMeshAttributes = sphereMeshAttributes.bake(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE))
+
+        val morphingMesh = AbcMorphingMesh(flatBakedMesh.vertexAttributes, flatBakedMesh.indexBuffer)
+        morphingMesh.addFrame(sphereBakedMeshAttributes, 6000)
+        morphingMesh.addFrame(sphereBakedMeshAttributes, 3000)
+        morphingMesh.addFrame(flatBakedMesh.vertexAttributes, 3000)
+        morphingMesh.addFrame(flatBakedMesh.vertexAttributes, 3000)
+
+        return morphingMesh
+    }
+
+    fun skeletalCylinder(circleSegmentsCount: Int, zSegmentsCount: Int) : AbcSkeletalMesh {
+        val cylinderMesh = AbcCylinder(circleSegmentsCount, zSegmentsCount)
+                .mesh.bake(AbcMeshRaw.Recipe(AbcVertexAttributesRaw.Recipe(Vector4Components.THREE, Vector4Components.THREE)))
+        val skeletalAttributes = AbcSkeletalVertexAttributes(
+                cylinderMesh.vertexAttributes,
+                directFloatBuffer(0), Vector4Components.ZERO)
+        return AbcSkeletalMesh(skeletalAttributes, listOf(), cylinderMesh.indexBuffer)
+    }
 }

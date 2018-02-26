@@ -31,7 +31,7 @@ class Matrix4(private val data: FloatArray = FloatArray(MATRIX4_SIZE), private v
     }
 
     fun scale(scale: Vector4): Matrix4 {
-        MatrixUtils.scaleM(data, offset, scale.x, scale.x, scale.x)
+        MatrixUtils.scaleM(data, offset, scale.x, scale.y, scale.z)
         return this
     }
 

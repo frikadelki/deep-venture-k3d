@@ -62,7 +62,7 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
         return this
     }
 
-    fun set(x: Float = this.x, y: Float = this.y, z: Float = this.z, w: Float = this.w) : Vector4 {
+    fun set(x: Float = this.x, y: Float = this.y, z: Float = this.z, w: Float = this.w): Vector4 {
         data[offset + V4_X] = x
         data[offset + V4_Y] = y
         data[offset + V4_Z] = z
@@ -71,11 +71,10 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
     }
 
     fun set(vector: Vector4RO): Vector4 {
-        if (vector is Vector4) {
-            return set(vector)
+        return if (vector is Vector4) {
+            set(vector)
         } else {
             set(vector.x, vector.y, vector.z, vector.w)
-            return this
         }
     }
 
@@ -219,10 +218,12 @@ class Vector4(private val data: FloatArray = FloatArray(VECTOR4_SIZE),
         set(value) { offset = value }
 }
 
+
 class Vector4Array internal constructor(private val data: FloatArray,
                                         private val dataOffset: Int,
-                                        val vectorsCount: Int,
-                                        private val tmpVector: Vector4 = Vector4()) {
+                                        val vectorsCount: Int) {
+    private val floatsCount = vectorsCount * VECTOR4_SIZE
+
     init {
         if (dataOffset < 0) {
             throw IllegalArgumentException("dataOffset")
@@ -230,19 +231,21 @@ class Vector4Array internal constructor(private val data: FloatArray,
         if (vectorsCount <= 0) {
             throw IllegalArgumentException("vectorsCount")
         }
-        if (dataOffset + vectorsCount * VECTOR4_SIZE > data.size) {
+        if (dataOffset + floatsCount > data.size) {
             throw IllegalArgumentException("data|dataOffset|vectorsCount")
         }
     }
 
     constructor(vectorsCount: Int) : this(FloatArray(vectorsCount * VECTOR4_SIZE), 0, vectorsCount)
 
+    private val tmpVector: Vector4 = Vector4()
+
     private val access: Vector4 = Vector4(data, dataOffset)
     private var position: Int = 0
 
-    private fun advancePosition() {
-        position++
-        access.rawOffset += VECTOR4_SIZE
+    private fun advancePosition(count: Int = 1) {
+        position += count
+        access.rawOffset += count * VECTOR4_SIZE
     }
 
     fun rewind() {
@@ -264,28 +267,11 @@ class Vector4Array internal constructor(private val data: FloatArray,
         }
     }
 
-    fun replaceVector(visitor: (vector: Vector4) -> Unit) {
-        checkRemaining()
-        visitor(access)
-        advancePosition()
-    }
-
-    fun readVector(out: Vector4) {
-        checkRemaining()
-        out.set(access)
-        advancePosition()
-    }
-
-    fun readVector(out: Vector4Array) {
-        checkRemaining()
-        out.putVector(access)
-        advancePosition()
-    }
-
-    fun putVector(vector: Vector4) {
+    fun putVector(vector: Vector4): Vector4 {
         checkRemaining()
         access.set(vector)
         advancePosition()
+        return vector
     }
 
     fun putVector(x: Float, y: Float, z: Float, w: Float) {
@@ -300,16 +286,6 @@ class Vector4Array internal constructor(private val data: FloatArray,
         advancePosition()
     }
 
-    fun putAll(other: Vector4Array) {
-        if (remaining() < other.remaining()) {
-            throw IllegalArgumentException()
-        }
-        // TODO: can be optimized with direct array chunk copy
-        while (other.hasRemaining()) {
-            other.readVector(this)
-        }
-    }
-
     fun forEachRemaining(visitor: (vector: Vector4) -> Unit) {
         while (hasRemaining()) {
             visitor(access)
@@ -317,9 +293,41 @@ class Vector4Array internal constructor(private val data: FloatArray,
         }
     }
 
+    fun writeRemainingTo(output: Vector4Array, visitor: ((vector: Vector4) -> Unit)? = null) {
+        if (!hasRemaining()) {
+            return
+        }
+        if (remaining() > output.remaining()) {
+            throw IllegalArgumentException()
+        }
+        val writeVectorsCount = remaining()
+        System.arraycopy(
+                access.rawData, access.rawOffset,
+                output.access.rawData, output.access.rawOffset,
+                writeVectorsCount * VECTOR4_SIZE)
+        advancePosition(writeVectorsCount)
+        if (visitor != null) {
+            for (i in 0 until writeVectorsCount) {
+                visitor(output.access)
+                output.advancePosition()
+            }
+        } else {
+            output.advancePosition(writeVectorsCount)
+        }
+    }
+
+    fun nextSlice(): Vector4 {
+        checkRemaining()
+        val slice = slice(position)
+        advancePosition()
+        return slice
+    }
+
+    // specific group operations that apply to all elements and reset position to the end
+
     fun multiplyAll(matrix: Matrix4) {
         rewind()
-        for(i in 0 until vectorsCount) {
+        for (i in 0 until vectorsCount) {
             access.set(matrix.multiply(access, tmpVector))
             advancePosition()
         }
@@ -341,8 +349,10 @@ class Vector4Array internal constructor(private val data: FloatArray,
         }
     }
 
-    operator fun get(index: Int): Vector4 {
-        return Vector4(data, dataOffset + index * VECTOR4_SIZE)
+    // slicing/direct access/export operations
+
+    fun slice(vectorsOffset: Int): Vector4 {
+        return Vector4(data, dataOffset + vectorsOffset * VECTOR4_SIZE)
     }
 
     fun slice(vectorsOffset: Int, sliceVectorsCount: Int): Vector4Array {
@@ -360,15 +370,21 @@ class Vector4Array internal constructor(private val data: FloatArray,
         if (vectorsOffset + sliceVectorsCount > vectorsCount) {
             throw IllegalArgumentException("vectorOffset + sliceVectorsCount is out of bounds")
         }
-        return Vector4Array(data, sliceStartDataOffset, sliceVectorsCount, tmpVector)
+        return Vector4Array(data, sliceStartDataOffset, sliceVectorsCount)
     }
 
-    fun toDirectFloatBuffer(components: Vector4Components) : FloatBuffer {
+    fun copy(): Vector4Array {
+        val copy = Vector4Array(vectorsCount)
+        System.arraycopy(data, dataOffset, copy.data, 0, floatsCount)
+        return copy
+    }
+
+    fun toDirectFloatBuffer(components: Vector4Components): FloatBuffer {
         val output = directFloatBuffer(components.count * vectorsCount)
-        rewind()
+        var dataOffset = this.dataOffset
         for (i in 0 until vectorsCount) {
-            access.writeTo(output, components)
-            advancePosition()
+            output.put(data, dataOffset, components.count)
+            dataOffset += VECTOR4_SIZE
         }
         output.rewind()
         return output
