@@ -58,7 +58,7 @@ class LightsSnippet(private val maxSimpleLights: Int) {
 
                         vec4 lightColor = lightsSimpleColor[i];
                         light.diffuse += max(0.0, lambertian) * lightColor;
-                        light.specular += pow(max(0.0, specularAngle), shininess) * lightColor;
+                        light.specular += pow(max(0.0, specularAngle), shininess) * lambertian * lightColor;
                     }
                     return light;
                 }
